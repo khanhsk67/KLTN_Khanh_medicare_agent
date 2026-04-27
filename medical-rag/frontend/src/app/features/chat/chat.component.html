@@ -1,0 +1,88 @@
+<p-toast />
+
+<div class="chat-layout">
+
+  <!-- ── Sidebar ────────────────────────────────────────────────── -->
+  <aside class="sidebar" [class.sidebar--open]="sidebarOpen()">
+
+    <div class="sidebar-header">
+      <button class="icon-btn" (click)="toggleSidebar()" title="Đóng sidebar">
+        <i class="pi pi-bars"></i>
+      </button>
+      <button class="icon-btn" (click)="newChat()" title="Cuộc trò chuyện mới">
+        <i class="pi pi-pencil"></i>
+      </button>
+    </div>
+
+    <div class="sidebar-sessions">
+      <p class="sessions-label">Gần đây</p>
+      @if (sessions().length === 0) {
+        <p class="sessions-empty">Chưa có cuộc trò chuyện nào</p>
+      }
+      @for (session of sessions(); track session.id) {
+        <button
+          class="session-item"
+          [class.session-item--active]="session.id === sessionId()"
+          (click)="loadSession(session.id)">
+          <i class="pi pi-comment session-icon"></i>
+          <span class="session-title">{{ session.title || 'Cuộc trò chuyện' }}</span>
+        </button>
+      }
+    </div>
+
+    <div class="sidebar-footer">
+      <a routerLink="/analysis" routerLinkActive="footer-item--active" class="footer-item">
+        <i class="pi pi-image"></i>
+        <span>Phân tích ảnh</span>
+      </a>
+      <a routerLink="/history" routerLinkActive="footer-item--active" class="footer-item">
+        <i class="pi pi-history"></i>
+        <span>Lịch sử</span>
+      </a>
+      <button class="footer-item footer-item--logout" (click)="logout()">
+        <i class="pi pi-sign-out"></i>
+        <span>Đăng xuất</span>
+      </button>
+    </div>
+  </aside>
+
+  <!-- ── Main content ───────────────────────────────────────────── -->
+  <div class="main-content">
+
+    @if (isEmergency()) {
+      <app-emergency-banner (dismissed)="isEmergency.set(false)" />
+    }
+
+    <!-- Empty state: input centered -->
+    @if (!hasMessages()) {
+      <div class="welcome-view">
+        <div class="welcome-hero">
+          <i class="pi pi-heart-fill welcome-icon"></i>
+          <h1 class="welcome-title">MedConsult AI</h1>
+          <p class="welcome-sub">Mô tả triệu chứng của bạn để nhận tư vấn y tế từ AI</p>
+        </div>
+        <div class="welcome-input">
+          <app-chat-input
+            [disabled]="isLoading()"
+            [centered]="true"
+            (messageSent)="onMessageSent($event)"
+          />
+        </div>
+      </div>
+    } @else {
+      <!-- Active chat: messages + bottom input -->
+      <div class="chat-view">
+        <app-chat-messages
+          [messages]="messages()"
+          [isLoading]="isLoading()"
+        />
+        <div class="chat-input-bar">
+          <app-chat-input
+            [disabled]="isLoading()"
+            (messageSent)="onMessageSent($event)"
+          />
+        </div>
+      </div>
+    }
+  </div>
+</div>

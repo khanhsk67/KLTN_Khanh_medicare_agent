@@ -1,0 +1,31 @@
+[tool.poetry]
+name = "medical-rag-backend"
+version = "0.1.0"
+description = "Backend for Medical RAG system using Agentic RAG"
+authors = ["Your Name <your.email@example.com>"]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+fastapi = "^0.104.1"
+uvicorn = {extras = ["standard"], version = "^0.24.0"}
+langgraph = "^0.0.32"
+langchain = "^0.1.0"
+langchain-anthropic = "^0.1.0"
+langchain-community = "^0.0.13"
+qdrant-client = "^1.7.1"
+voyageai = "^0.2.3"
+pydantic = {extras = ["email"], version = "^2.5.0"}
+python-multipart = "^0.0.6"
+python-dotenv = "^1.0.0"
+httpx = "^0.25.2"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^7.4.3"
+pytest-asyncio = "^0.21.1"
+black = "^23.11.0"
+isort = "^5.12.0"
+flake8 = "^6.1.0"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

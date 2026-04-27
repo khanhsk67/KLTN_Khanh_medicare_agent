@@ -1,0 +1,64 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Python
+__pycache__/
+**/__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+*.dist-info/
+dist/
+build/
+.venv/
+venv/
+env/
+
+# Python packages installed directly (not via venv)
+medical-rag/backend/aiosqlite/
+medical-rag/backend/aiosqlite-*/
+
+# Environment files (sensitive)
+.env
+**/.env
+!**/.env.example
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Pytest
+.pytest_cache/
+**/.pytest_cache/
+.coverage
+htmlcov/
+
+# Build output
+medical-rag/frontend/dist/
+medical-rag/frontend/.angular/
+
+# Logs
+*.log
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+
+# Documentation / reports (not part of running project)
+doc/
+
+# Claude Code internal
+.claude/
+.sfdx/
+
+# Docker
+*.override.yml

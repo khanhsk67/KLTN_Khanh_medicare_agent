@@ -1,0 +1,31 @@
+import { Component, output } from '@angular/core';
+import { FlexLayoutModule } from '@ngbracket/ngx-layout';
+import { ButtonModule } from 'primeng/button';
+
+@Component({
+  selector: 'app-emergency-banner',
+  standalone: true,
+  imports: [FlexLayoutModule, ButtonModule],
+  template: `
+    <div fxLayout="row" fxLayoutAlign="space-between center" class="emergency-banner p-3">
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
+        <i class="pi pi-exclamation-triangle" style="font-size: 24px"></i>
+        <div>
+          <div class="font-bold">CẢNH BÁO: Triệu chứng có thể nghiêm trọng</div>
+          <div>Gọi ngay cấp cứu: <strong>115</strong></div>
+        </div>
+      </div>
+      <p-button icon="pi pi-times" [text]="true" severity="contrast" (click)="dismissed.emit()" />
+    </div>
+  `,
+  styles: [`
+    .emergency-banner {
+      background: #c62828;
+      color: #fff;
+      border-radius: 0;
+    }
+  `]
+})
+export class EmergencyBannerComponent {
+  readonly dismissed = output<void>();
+}

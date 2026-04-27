@@ -1,0 +1,58 @@
+<p-toast/>
+<p-confirmDialog/>
+
+<div class="flex flex-column gap-3 p-4">
+
+  <!-- Header -->
+  <div class="flex align-items-center justify-content-between">
+    <h1 class="m-0 text-2xl font-bold">Lịch sử tư vấn</h1>
+    <div class="flex align-items-center gap-2">
+      <span class="text-color-secondary text-sm">{{ allSessions().length }} phiên</span>
+      <p-button label="Làm mới" icon="pi pi-refresh" [text]="true"
+                size="small" (onClick)="loadSessions()"/>
+    </div>
+  </div>
+
+  <!-- Search bar -->
+  <p-iconfield style="max-width: 480px">
+    <p-inputicon class="pi pi-search"/>
+    <input pInputText class="w-full"
+           placeholder="Tìm kiếm lịch sử..."
+           (input)="onSearch($event)"/>
+  </p-iconfield>
+
+  <!-- Loading skeletons -->
+  @if (isLoading()) {
+    <div class="flex flex-column gap-2">
+      @for (_ of skeletonItems; track $index) {
+        <p-skeleton height="4.5rem" borderRadius="8px"/>
+      }
+    </div>
+  } @else {
+    <p-dataview [value]="filteredSessions()">
+      <ng-template #list let-items>
+        @for (s of items; track s.id) {
+          <app-session-card
+            [session]="s"
+            (viewRequested)="onView($event)"
+            (deleteRequested)="onDelete($event)"/>
+        }
+      </ng-template>
+      <ng-template #emptymessage>
+        <div class="flex flex-column align-items-center
+                    justify-content-center gap-3 py-8">
+          <i class="pi pi-inbox"
+             style="font-size: 3rem; color: var(--p-text-muted-color)"></i>
+          <p class="m-0 text-color-secondary">
+            @if (searchQuery()) {
+              Không tìm thấy kết quả cho "́{{ searchQuery() }}"
+            } @else {
+              Chưa có lịch sử tư vấn
+            }
+          </p>
+        </div>
+      </ng-template>
+    </p-dataview>
+  }
+
+</div>

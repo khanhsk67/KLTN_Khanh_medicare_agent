@@ -1,0 +1,46 @@
+<nav class="navbar surface-card border-bottom-1 surface-border px-4 py-2 flex align-items-center justify-content-between">
+  <a routerLink="/chat" class="flex align-items-center gap-2 no-underline">
+    <i class="pi pi-heart-fill text-primary text-xl"></i>
+    <span class="font-bold text-lg text-900">MedConsult AI</span>
+  </a>
+
+  <div class="flex align-items-center gap-2">
+    <a
+      routerLink="/chat"
+      routerLinkActive="active-link"
+      class="nav-link"
+    >
+      <i class="pi pi-comments"></i>
+      <span>Tư vấn</span>
+    </a>
+    <a
+      routerLink="/analysis"
+      routerLinkActive="active-link"
+      class="nav-link"
+    >
+      <i class="pi pi-image"></i>
+      <span>Phân tích ảnh</span>
+    </a>
+    <a
+      routerLink="/history"
+      routerLinkActive="active-link"
+      class="nav-link"
+    >
+      <i class="pi pi-history"></i>
+      <span>Lịch sử</span>
+    </a>
+
+    @if (authService.isAuthenticated()) {
+      <app-wallet-widget/>
+    }
+
+    <p-button
+      icon="pi pi-sign-out"
+      label="Đăng xuất"
+      severity="secondary"
+      [text]="true"
+      size="small"
+      (click)="logout()"
+    />
+  </div>
+</nav>
