@@ -102,7 +102,7 @@ def upgrade() -> None:
         sa.Column("session_id", postgresql.UUID(as_uuid=True), nullable=False),
         sa.Column("role", sa.String(20), nullable=False),
         sa.Column("content", sa.Text(), nullable=False),
-        sa.Column("image_url", sa.String(1024), nullable=True),
+        sa.Column("image_url", sa.Text(), nullable=True),
         sa.Column("sources", postgresql.JSONB(), nullable=True),
         sa.Column("urgency_level", sa.String(50), nullable=True),
         sa.Column(

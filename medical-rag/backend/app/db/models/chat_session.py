@@ -47,5 +47,5 @@ class ChatSession(Base):
         order_by="ChatMessage.created_at",
     )
     treatment_record: Mapped["TreatmentRecord | None"] = relationship(
-        "TreatmentRecord", back_populates="session", uselist=False
+        "TreatmentRecord", back_populates="session", uselist=False, cascade="all, delete-orphan"
     )

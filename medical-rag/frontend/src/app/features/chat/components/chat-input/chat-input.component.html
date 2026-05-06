@@ -1,0 +1,47 @@
+<div class="chat-input-wrapper" [class.chat-input-wrapper--centered]="centered">
+
+  <!-- Image preview -->
+  @if (selectedImage()) {
+    <div class="image-preview">
+      <img [src]="selectedImage()!.preview" width="60" height="60"
+           style="object-fit:cover;border-radius:8px;flex-shrink:0" />
+      <span class="image-name">{{ selectedImage()!.name }}</span>
+      <button type="button" class="remove-img-btn" (click)="removeImage()" title="Xóa ảnh">
+        <i class="pi pi-times"></i>
+      </button>
+    </div>
+  }
+
+  <div class="input-row">
+    <!-- Hidden file input -->
+    <input #fileInput type="file" accept="image/*"
+           (change)="onFileSelected($event)"
+           style="display:none" />
+
+    <!-- Attach image button -->
+    <button type="button" class="action-btn"
+            pTooltip="Đính kèm ảnh" tooltipPosition="top"
+            [disabled]="disabled"
+            (click)="fileInput.click()">
+      <i class="pi pi-image"></i>
+    </button>
+
+    <!-- Textarea -->
+    <textarea pInputTextarea class="msg-textarea"
+              [(ngModel)]="messageText"
+              [autoResize]="true"
+              rows="1"
+              placeholder="Mô tả triệu chứng... (Enter gửi, Shift+Enter xuống dòng)"
+              [disabled]="disabled"
+              (keydown)="onKeydown($event)"
+              style="resize:none"></textarea>
+
+    <!-- Send button -->
+    <button type="button" class="send-btn"
+            [disabled]="disabled || !messageText.trim()"
+            (click)="send()"
+            pTooltip="Gửi" tooltipPosition="top">
+      <i class="pi pi-send"></i>
+    </button>
+  </div>
+</div>

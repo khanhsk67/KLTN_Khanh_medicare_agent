@@ -107,10 +107,15 @@ async def _persist_to_db(
     state["session_id"] = str(chat_session.id)
 
     # --- User message ---
+    image_b64 = state.get("image_base64")
+    image_mime = state.get("image_mime_type") or "image/jpeg"
+    image_url = f"data:{image_mime};base64,{image_b64}" if image_b64 else None
+
     user_msg = ChatMessage(
         session_id=chat_session.id,
         role="user",
         content=state.get("user_message", ""),
+        image_url=image_url,
     )
     db.add(user_msg)
 

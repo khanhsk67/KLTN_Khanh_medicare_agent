@@ -1,0 +1,87 @@
+ .stat-icon {
+     width: 3rem;
+     height: 3rem;
+     border-radius: 50%;
+     display: flex;
+     align-items: center;
+     justify-content: center;
+     flex-shrink: 0;
+ }
+
+ .weather-card-header {
+     display: flex;
+     align-items: center;
+     gap: 0.5rem;
+     padding: 1rem 1.25rem 0;
+ }
+
+ .weather-header-icon {
+     font-size: 1.25rem;
+     color: #3B82F6;
+ }
+
+ .weather-stats-row {
+     display: flex;
+     align-items: center;
+     gap: 1rem;
+     flex-wrap: wrap;
+     padding: 0.75rem 0;
+     border-top: 1px solid var(--surface-border);
+     border-bottom: 1px solid var(--surface-border);
+ }
+
+ .weather-stat-item {
+     display: flex;
+     flex-direction: column;
+     align-items: center;
+     gap: 0.2rem;
+     flex: 1;
+     min-width: 5rem;
+ }
+
+ .weather-value {
+     font-size: 1.6rem;
+     font-weight: 700;
+     line-height: 1;
+ }
+
+ .weather-label {
+     font-size: 0.72rem;
+     color: var(--text-color-secondary);
+     text-transform: uppercase;
+     letter-spacing: 0.05em;
+ }
+
+ .weather-stat-divider {
+     width: 1px;
+     height: 2.5rem;
+     background: var(--surface-border);
+ }
+
+ .disease-chip {
+     background: rgba(239, 68, 68, 0.1) !important;
+     color: #EF4444 !important;
+     font-size: 0.8rem;
+ }
+
+ .advice-box {
+     display: flex;
+     gap: 0.6rem;
+     align-items: flex-start;
+     background: rgba(59, 130, 246, 0.07);
+     border-left: 3px solid #3B82F6;
+     border-radius: 0 0.5rem 0.5rem 0;
+     padding: 0.75rem;
+ }
+
+ .advice-icon {
+     color: #3B82F6;
+     font-size: 1rem;
+     flex-shrink: 0;
+     margin-top: 0.1rem;
+ }
+
+ :host ::ng-deep .p-timeline-event-opposite {
+     gap: 0;
+     flex: 1 auto;
+ }

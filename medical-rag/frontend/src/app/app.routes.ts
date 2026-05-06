@@ -37,7 +37,7 @@ export const routes: Routes = [
   {
     path: 'history/:id',
     loadComponent: () =>
-      import('./features/history/components/session-detail.component')
+      import('./features/history/components/session-detail/session-detail.component')
         .then(m => m.SessionDetailComponent),
     canActivate: [authGuard]
   },

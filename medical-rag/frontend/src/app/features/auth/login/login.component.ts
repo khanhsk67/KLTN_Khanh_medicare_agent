@@ -64,6 +64,7 @@ export class LoginComponent {
       next: (res) => {
         // console.log("nè", payload);
         
+        
         localStorage.setItem('access_token', res.access_token);
         this.authService.getProfile().subscribe({
           next:(profile) => {

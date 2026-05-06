@@ -1,0 +1,45 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.messages-container {
+  display: flex;
+  flex-direction: column;
+}
+
+.user-bubble {
+  background: var(--p-primary-color);
+  color: #fff;
+  padding: 0.75rem 1rem;
+  border-radius: 1rem 1rem 0 1rem;
+  max-width: 70%;
+  word-break: break-word;
+}
+
+.assistant-bubble {
+  background: var(--p-surface-card);
+  border: 1px solid var(--p-surface-border);
+  padding: 0.75rem 1rem;
+  border-radius: 1rem 1rem 1rem 0;
+  max-width: 75%;
+  word-break: break-word;
+
+  &.emergency {
+    border-color: #c62828;
+    border-width: 2px;
+  }
+}
+
+.source-item {
+  border-bottom: 1px solid var(--p-surface-border);
+  padding: 0.5rem 0;
+
+  &:last-child {
+    border-bottom: none;
+    padding-bottom: 0;
+  }
+}

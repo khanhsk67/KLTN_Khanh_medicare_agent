@@ -2,7 +2,7 @@
 import uuid
 from datetime import datetime
 
-from sqlalchemy import DateTime, ForeignKey, String, Text, func, text
+from sqlalchemy import DateTime, ForeignKey, String, Text, func, text  # noqa: F401
 from sqlalchemy.dialects.postgresql import JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -28,7 +28,7 @@ class ChatMessage(Base):
         String(20), nullable=False  # "user" | "assistant"
     )
     content: Mapped[str] = mapped_column(Text, nullable=False)
-    image_url: Mapped[str | None] = mapped_column(String(1024), nullable=True)
+    image_url: Mapped[str | None] = mapped_column(Text, nullable=True)
     sources: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
     urgency_level: Mapped[str | None] = mapped_column(String(50), nullable=True)
     created_at: Mapped[datetime] = mapped_column(

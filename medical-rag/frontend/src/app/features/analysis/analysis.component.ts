@@ -1,7 +1,7 @@
 import { Component, signal, computed, effect, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
-import { catchError } from 'rxjs/operators';
+import { catchError, filter } from 'rxjs/operators';
 import { CardModule } from 'primeng/card';
 import { ChartModule } from 'primeng/chart';
 import { TimelineModule } from 'primeng/timeline';
@@ -17,6 +17,7 @@ import { MarkdownModule } from 'ngx-markdown';
 import { ApiService } from '../../core/services/api.service';
 import { HealthDashboard, HealthTimelineItem, HealthRiskResponse } from '../../core/models';
 import { RelativeTimePipe } from '../../shared/pipes/relative-time.pipe';
+import { SeverityPipe } from '../../shared/pipes/severity.pipe';
 
 @Component({
   selector: 'app-analysis',
@@ -34,7 +35,8 @@ import { RelativeTimePipe } from '../../shared/pipes/relative-time.pipe';
     SkeletonModule,
     ToastModule, 
     MarkdownModule,
-    RelativeTimePipe
+    RelativeTimePipe,
+    SeverityPipe
   ],
   providers: [MessageService],
   templateUrl: './analysis.component.html',
@@ -50,6 +52,9 @@ export class AnalysisComponent {
   readonly timelineEvents = signal<HealthTimelineItem[]>([]);
   readonly weatherData = signal<HealthRiskResponse | null>(null);
 
+  
+  filterKnowlegde : string = '';
+  resultText: string = '';
   readonly periodOptions = [
     { label: '7 ngày', value: 7 },
     { label: '30 ngày', value: 30 },
@@ -165,21 +170,6 @@ export class AnalysisComponent {
     });
   }
 
-  getSeverityLabel(severity: string): string {
-    const map: Record<string, string> = {
-      severe: 'Nghiêm trọng',
-      moderate: 'Trung bình',
-      mild: 'Nhẹ'
-    };
-    return map[severity] ?? severity;
-  }
-
-  getSeverityTag(severity: string): 'danger' | 'warn' | 'success' {
-    if (severity === 'severe') return 'danger';
-    if (severity === 'moderate') return 'warn';
-    return 'success';
-  }
-
   getRiskSeverity(level: string): 'danger' | 'warn' | 'success' {
     if (level === 'cao') return 'danger';
     if (level === 'trung bình') return 'warn';
@@ -192,4 +182,26 @@ export class AnalysisComponent {
     if (temp < 20) return '#3B82F6';
     return '#10B981';
   }
+
+
+  // basicRag(text: string){
+  //   const knowledge = [
+  //     "Angular là framework front-end dùng TypeScript.",
+  //     "FastAPI là framework Python để xây dựng API.",
+  //     "MongoDB là cơ sở dữ liệu NoSQL.",
+  //     "RAG là kỹ thuật kết hợp tìm kiếm tài liệu và mô hình ngôn ngữ."
+  //   ];
+  //   return knowledge.filter(k => k.toLowerCase().includes(text.toLowerCase()));
+  // }
+
+  // handlefilter(text: string){
+    
+  //   const result = this.basicRag(text);
+  //   console.log(result);
+  //   this.resultText = result.join('\n');
+  //   console.log("nà",this.resultText);
+    
+  //   return result;
+    
+  // }
 }

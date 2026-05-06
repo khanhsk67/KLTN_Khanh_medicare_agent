@@ -1,6 +1,6 @@
-@if (authService.isAuthenticated() && !isChatPage()) {
+@if (authService.isAuthenticated() && !isChatPage() && !isAuthPage()) {
   <app-navbar />
 }
-<main [class.with-navbar]="authService.isAuthenticated() && !isChatPage()">
+<main [class.with-navbar]="authService.isAuthenticated() && !isChatPage() && !isAuthPage()">
   <router-outlet />
 </main>

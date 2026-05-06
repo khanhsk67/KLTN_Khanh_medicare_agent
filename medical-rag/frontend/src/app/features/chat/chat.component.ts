@@ -5,9 +5,9 @@ import { MessageService } from 'primeng/api';
 import { ChatService } from '../../core/services/chat.service';
 import { AuthService } from '../../core/services/auth.service';
 import { MessageItem, ChatSession } from '../../core/models';
-import { ChatMessagesComponent } from './components/chat-messages.component';
-import { ChatInputComponent } from './components/chat-input.component';
-import { EmergencyBannerComponent } from './components/emergency-banner.component';
+import { ChatMessagesComponent } from './components/chat-messages/chat-messages.component';
+import { ChatInputComponent } from './components/chat-input/chat-input.component';
+import { EmergencyBannerComponent } from './components/emergency-banner/emergency-banner.component';
 import { WalletService } from '../../core/services/wallet.service';
 
 @Component({
@@ -27,14 +27,20 @@ import { WalletService } from '../../core/services/wallet.service';
 })
 export class ChatComponent implements OnInit {
 
-  constructor(private router: Router
-    
+  constructor(
+    private router: Router,
+    private messageService: MessageService,
+    private authService: AuthService,
+    private chatService: ChatService,
+    private walletService: WalletService,
+    private ngZone: NgZone,
+
   ) {}
-  private readonly chatService = inject(ChatService);
-  private readonly messageService = inject(MessageService);
-  private readonly authService = inject(AuthService);
-  private readonly ngZone = inject(NgZone);
-  private readonly walletService = inject(WalletService);
+  // private readonly chatService = inject(ChatService);
+  // private readonly messageService = inject(MessageService);
+  // private readonly authService = inject(AuthService);
+  // private readonly ngZone = inject(NgZone);
+  // private readonly walletService = inject(WalletService);
 
   readonly messages = signal<MessageItem[]>([]);
   readonly isLoading = signal(false);
@@ -58,6 +64,8 @@ export class ChatComponent implements OnInit {
 
   toggleSidebar(): void {
     this.sidebarOpen.update(v => !v);
+    
+    
   }
 
   newChat(): void {
@@ -135,6 +143,8 @@ export class ChatComponent implements OnInit {
 
         if (event.type === 'token' && event.content) {
           this.ngZone.run(() => {
+            console.log(event.type);
+            
             this.messages.update(msgs => {
               const updated = [...msgs];
               const last = updated[updated.length - 1];

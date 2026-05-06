@@ -14,7 +14,7 @@ import { ToastModule } from 'primeng/toast';
 import { ConfirmationService, MessageService } from 'primeng/api';
 import { ApiService } from '../../core/services/api.service';
 import { SessionSummary } from '../../core/models';
-import { SessionCardComponent } from './components/session-card.component';
+import { SessionCardComponent } from './components/session-card/session-card.component';
 
 @Component({
   selector: 'app-history',

@@ -61,7 +61,6 @@
       </p-panel>
     }
 
-    <!-- Charts: 2 cột desktop, 1 cột mobile -->
     <div class="grid">
       <div class="col-12 lg:col-6">
         <p-card styleClass="h-full">
@@ -146,10 +145,10 @@
       <div class="col-12 lg:col-6">
         <p-card header="Mức độ triệu chứng">
           @if (severityChartData()) {
-            <p-chart type="doughnut" [data]="severityChartData()" [options]="doughnutOptions" width="100%" height="auto"/>
+            <p-chart class="mt-3" type="doughnut" [data]="severityChartData()" [options]="doughnutOptions" width="100%" height="auto"/>
           } @else {
             <div class="flex flex-column align-items-center
-                        justify-content-center gap-2" style="height: 200px">
+                        justify-content-center gap-2" style="height: 400px">
               <i class="pi pi-chart-pie text-4xl text-color-secondary"></i>
               <p class="text-color-secondary m-0">Chưa có dữ liệu</p>
             </div>
@@ -161,14 +160,14 @@
     <!-- Health timeline -->
     @if (timelineEvents().length > 0) {
       <p-card header="Timeline sức khỏe">
-        <p-timeline [value]="timelineEvents()" align="left">
+        <p-timeline class="gap-1" [value]="timelineEvents()" align="left">
           <ng-template #content let-event>
             <p-card styleClass="mb-2">
               <div class="flex align-items-center
                           justify-content-between gap-2">
                 <span class="font-semibold">{{ event.main_symptom }}</span>
-                <p-tag [value]="getSeverityLabel(event.severity)"
-                       [severity]="getSeverityTag(event.severity)"/>
+                <p-tag [value]="event.severity | severity"
+                       [severity]="$any(event.severity | severity:'tag')"/>
               </div>
               @if (event.specialty) {
                 <div class="text-sm text-color-secondary mt-1">
@@ -189,82 +188,12 @@
 
   }
 </div>
+<!-- <div>
+    <p class="align-items-center justify-content-center">Nhập ở đây nè</p>
+    <input type="text" [(ngModel)]="filterKnowlegde">
+    <button (click)="handlefilter(this.filterKnowlegde)">Tìm kiếm</button>
 
-<style>
-  .stat-icon {
-    width: 3rem;
-    height: 3rem;
-    border-radius: 50%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-shrink: 0;
-  }
+  <h3>Kết quả tìm được: {{ resultText }}  </h3>
+</div> -->
 
-  .weather-card-header {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    padding: 1rem 1.25rem 0;
-  }
-  .weather-header-icon {
-    font-size: 1.25rem;
-    color: #3B82F6;
-  }
 
-  .weather-stats-row {
-    display: flex;
-    align-items: center;
-    gap: 1rem;
-    flex-wrap: wrap;
-    padding: 0.75rem 0;
-    border-top: 1px solid var(--surface-border);
-    border-bottom: 1px solid var(--surface-border);
-  }
-  .weather-stat-item {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.2rem;
-    flex: 1;
-    min-width: 5rem;
-  }
-  .weather-value {
-    font-size: 1.6rem;
-    font-weight: 700;
-    line-height: 1;
-  }
-  .weather-label {
-    font-size: 0.72rem;
-    color: var(--text-color-secondary);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-  }
-  .weather-stat-divider {
-    width: 1px;
-    height: 2.5rem;
-    background: var(--surface-border);
-  }
-
-  .disease-chip {
-    background: rgba(239, 68, 68, 0.1) !important;
-    color: #EF4444 !important;
-    font-size: 0.8rem;
-  }
-
-  .advice-box {
-    display: flex;
-    gap: 0.6rem;
-    align-items: flex-start;
-    background: rgba(59, 130, 246, 0.07);
-    border-left: 3px solid #3B82F6;
-    border-radius: 0 0.5rem 0.5rem 0;
-    padding: 0.75rem;
-  }
-  .advice-icon {
-    color: #3B82F6;
-    font-size: 1rem;
-    flex-shrink: 0;
-    margin-top: 0.1rem;
-  }
-</style>
