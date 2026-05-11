@@ -90,6 +90,30 @@ def _format_chunks_for_prompt(chunks: list[SourceChunk]) -> str:
     return "\n\n---\n\n".join(sections)
 
 
+def _log_retrieved_chunks(query: str, chunks: list[SourceChunk]) -> None:
+    """Log RAG retrieval flow and returned chunks for debugging."""
+    logger.info("[RAG] Query sent to vector DB: %s", query[:200])
+    logger.info("[RAG] Returned chunks: %d", len(chunks))
+
+    if not chunks:
+        logger.warning(
+            "[RAG] No chunks returned. Qdrant may be empty or no result passed the score threshold."
+        )
+        return
+
+    for index, chunk in enumerate(chunks, 1):
+        preview = " ".join(chunk.content.split())[:300]
+        logger.info(
+            "[RAG] Chunk %d/%d | score=%s | file=%s | page=%s | preview=%s",
+            index,
+            len(chunks),
+            chunk.relevance_score,
+            chunk.source_file,
+            chunk.page_number,
+            preview,
+        )
+
+
 # ---------------------------------------------------------------------------
 # Agent node
 # ---------------------------------------------------------------------------
@@ -108,10 +132,13 @@ async def retrieve_medical_rules(state: AgentState) -> AgentState:
 
     # Tìm kiếm tài liệu y tế
     try:
+        logger.info("[RAG] Starting vector search with top_k=5")
         chunks = await qdrant_service.search(query, top_k=5)
     except Exception as exc:
         logger.error("Qdrant search lỗi: %s", exc)
         chunks = []
+
+    _log_retrieved_chunks(query, chunks)
 
     state["retrieved_chunks"] = chunks
     state["sources"] = chunks

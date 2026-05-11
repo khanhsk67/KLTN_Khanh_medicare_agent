@@ -155,4 +155,3 @@ python backend/scripts/ingest_pdf.py path/to/document.pdf
 
 ## License
 
-Add your preferred license information here.

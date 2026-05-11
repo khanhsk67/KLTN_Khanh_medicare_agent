@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
+import hashlib
+import secrets
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -29,7 +31,7 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 
 # ---------------------------------------------------------------------------
-# JWT
+# JWT - Access Token
 # ---------------------------------------------------------------------------
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
@@ -39,6 +41,37 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     payload = {**data, "exp": expire, "type": "access"}
     return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
 
+
+# ---------------------------------------------------------------------------
+# JWT - Refresh Token
+# ---------------------------------------------------------------------------
+
+def create_refresh_token(user_id: str) -> tuple[str, str]:
+    """
+    Tạo refresh token và trả về (token, jti)
+    jti (JWT ID) dùng để tracking và revoke
+    """
+    jti = secrets.token_urlsafe(32)
+    expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+
+    payload = {
+        "sub": user_id,
+        "type": "refresh",
+        "jti": jti,
+        "exp": expire,
+    }
+    token = jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    return token, jti
+
+
+def hash_token(token: str) -> str:
+    """Hash token để lưu vào database (không lưu plaintext)"""
+    return hashlib.sha256(token.encode()).hexdigest()
+
+
+# ---------------------------------------------------------------------------
+# JWT - Decode
+# ---------------------------------------------------------------------------
 
 def decode_token(token: str) -> dict:
     try:

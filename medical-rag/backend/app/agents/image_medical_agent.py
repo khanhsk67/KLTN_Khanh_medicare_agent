@@ -93,7 +93,9 @@ async def analyze_image(state: AgentState) -> AgentState:
                 result.get("severity"),
                 result.get("urgency"),
             )
+            logger.info("thông tin của Agent 1 sau khi phân tích hình ảnh là %s", state["image_analysis_result"])
             return state
+            
         except json.JSONDecodeError as exc:
             last_error = exc
             logger.warning("Attempt %d — JSON parse lỗi: %s", attempt + 1, exc)

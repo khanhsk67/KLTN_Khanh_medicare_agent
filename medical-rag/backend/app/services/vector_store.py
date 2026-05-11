@@ -2,6 +2,8 @@
 import asyncio
 import time
 from typing import List
+import logging
+logger = logging.getLogger(__name__)
 
 import google.generativeai as genai
 from qdrant_client import QdrantClient
@@ -53,14 +55,43 @@ class QdrantService:
     # Search
     # ------------------------------------------------------------------
     async def search(self, query: str, top_k: int = 5) -> List[SourceChunk]:
+        logger.info("[Qdrant] Search config | url=%s | collection=%s | top_k=%d", settings.QDRANT_URL, self.collection_name, top_k)
+        logger.info("Đây là query trước khi làm gì đó: query=%s", query)
         query_vector = await self.embed_text(query)
+        logger.info("đây là query sau khi embed: %s", query_vector[:5])  
+        try:
+            count_results = self.client.count(
+                collection_name=self.collection_name,
+                exact=True,
+            )
+            logger.info(
+                "[Qdrant] Collection point count | collection=%s | points=%d",
+                self.collection_name,
+                count_results.count,
+            )
 
-        results = self.client.search(
-            collection_name=self.collection_name,
-            query_vector=query_vector,
-            limit=top_k,
-            score_threshold=0.65,
-        )
+        # results = self.client.search(
+        #     collection_name=self.collection_name,
+        #     query_vector=query_vector,
+        #     limit=top_k,
+        #     with_payload=True,
+        #     # score_threshold=0.65,
+        # )
+
+
+            response = self.client.query_points(
+                collection_name=self.collection_name,
+                query=query_vector,
+                limit=top_k,
+                with_payload=True,
+                # score_threshold=0.65,
+            )
+
+        except Exception:
+            logger.exception("[Qdrant] Error during search")
+            raise
+            
+        results = response.points
 
         chunks: List[SourceChunk] = []
         for hit in results:

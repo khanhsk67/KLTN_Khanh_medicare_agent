@@ -1,15 +1,23 @@
 # -*- coding: utf-8 -*-
 import uuid
+from datetime import datetime, timedelta, timezone
 
 from fastapi import HTTPException, status
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.config import settings
-from app.core.security import create_access_token, decode_token, hash_password, verify_password
-from app.db.models.chat_session import ChatSession
+from app.core.security import (
+    create_access_token,
+    create_refresh_token,
+    decode_token,
+    hash_password,
+    hash_token,
+    verify_password,
+)
+from app.db.models.refresh_token import RefreshToken
 from app.db.models.user import User
-from app.models.schemas import TokenResponse, UserCreate, UserProfile, UserResponse
+from app.models.schemas import TokenResponse, UserCreate, UserProfile
 
 
 class AuthService:
