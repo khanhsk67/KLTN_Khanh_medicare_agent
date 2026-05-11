@@ -88,14 +88,11 @@ export class ChatComponent implements OnInit {
   }
 
   logout(): void {
-    // this.authService.logout();
-    this.authService.logout().subscribe({
-      next: () => {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user');
-        this.router.navigate(['/auth/login']);
-      },
-    });
+    const goLogin = () => {
+      this.authService.clearSession();
+      this.router.navigate(['/auth/login']);
+    };
+    this.authService.logout().subscribe({ next: goLogin, error: goLogin });
   }
 
 

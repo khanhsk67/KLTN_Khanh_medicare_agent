@@ -1,14 +1,21 @@
 # -*- coding: utf-8 -*-
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, Request, status
+from fastapi import APIRouter, Body, Depends, Request, status
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.limiter import limiter
 
 from app.core.security import get_current_user
 from app.db.models.user import User
 from app.db.session import get_db
-from app.models.schemas import TokenResponse, UserCreate, UserLogin, UserProfile, UserResponse
+from app.models.schemas import (
+    RefreshTokenRequest,
+    TokenResponse,
+    UserCreate,
+    UserLogin,
+    UserProfile,
+    UserResponse,
+)
 from app.services.auth_service import AuthService
 
 router = APIRouter(prefix="/api/auth", tags=["auth"])
@@ -29,6 +36,7 @@ async def register(
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> UserResponse:
     user = await AuthService.register(db, body)
+    await db.commit()
     return UserResponse.model_validate(user)
 
 
@@ -42,7 +50,28 @@ async def login(
     body: UserLogin,
     db: Annotated[AsyncSession, Depends(get_db)],
 ) -> TokenResponse:
-    return await AuthService.login(db, body.email, body.password)
+    token_response = await AuthService.login(db, body.email, body.password)
+    await db.commit()
+    return token_response
+
+
+# ---------------------------------------------------------------------------
+# POST /api/auth/refresh
+# ---------------------------------------------------------------------------
+@router.post("/refresh", response_model=TokenResponse)
+@limiter.limit("20/minute")
+async def refresh_token(
+    request: Request,
+    body: RefreshTokenRequest,
+    db: Annotated[AsyncSession, Depends(get_db)],
+) -> TokenResponse:
+    """
+    Làm mới access token bằng refresh token.
+    Refresh token cũ sẽ bị revoke và trả về refresh token mới (rotation).
+    """
+    token_response = await AuthService.refresh_access_token(db, body.refresh_token)
+    await db.commit()
+    return token_response
 
 
 # ---------------------------------------------------------------------------
@@ -62,6 +91,14 @@ async def get_me(
 @router.post("/logout")
 async def logout(
     current_user: Annotated[User, Depends(get_current_user)],
+    db: Annotated[AsyncSession, Depends(get_db)],
+    refresh_token: str | None = Body(default=None, embed=True),
 ) -> dict:
-    # JWT stateless — client xoa token phia client la du
-    return {"message": "ok"}
+    """
+    Logout và revoke refresh token.
+    Nếu gửi refresh_token trong body, chỉ revoke token đó.
+    Nếu không gửi, revoke tất cả tokens của user.
+    """
+    await AuthService.logout(db, str(current_user.id), refresh_token)
+    await db.commit()
+    return {"message": "Logged out successfully"}

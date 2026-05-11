@@ -56,6 +56,7 @@ from app.db.models.point_transaction import PointTransaction  # noqa: F401
 from app.db.models.daily_checkin import DailyCheckin  # noqa: F401
 from app.db.models.promo_code import PromoCode, PromoCodeRedemption  # noqa: F401
 from app.db.models.chat_usage import ChatUsage  # noqa: F401
+from app.db.models.refresh_token import RefreshToken  # noqa: F401
 from app.db.session import get_db
 from app.core.security import (
     create_access_token,

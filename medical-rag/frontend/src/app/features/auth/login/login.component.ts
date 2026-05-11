@@ -56,18 +56,13 @@ export class LoginComponent {
     this.errorMessage = '';
 
     const payload = this.form.value as { email: string; password: string };
-    // const { email, password } = this.form.value as { email: string; password: string };
-    // AuthService.login() gọi POST /api/auth/login, lưu token vào localStorage
-    // và cập nhật _token signal — cần thiết để authGuard hoạt động đúng
-    
+
     this.authService.login(payload).subscribe({
       next: (res) => {
-        // console.log("nè", payload);
-        
-        
-        localStorage.setItem('access_token', res.access_token);
+        // Caller tự lưu cả access_token + refresh_token vào localStorage
+        this.authService.setSession(res);
         this.authService.getProfile().subscribe({
-          next:(profile) => {
+          next: (profile) => {
             localStorage.setItem('user', JSON.stringify(profile));
             this.router.navigate(['/analysis']);
           },

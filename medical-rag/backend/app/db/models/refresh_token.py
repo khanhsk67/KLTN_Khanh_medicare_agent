@@ -25,20 +25,21 @@ class RefreshToken(Base):
         index=True,
     )
     token_hash: Mapped[str] = mapped_column(
-        String(255), unique=True, nullable=False, index=True
+        String(64), unique=True, index=True, nullable=False
     )
     expires_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False
     )
-    is_revoked: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_revoked: Mapped[bool] = mapped_column(
+        Boolean, default=False, nullable=False
+    )
+    revoked_at: Mapped[datetime | None] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
         nullable=False,
     )
-    revoked_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True), nullable=True
-    )
 
-    # Relationship
     user: Mapped["User"] = relationship("User", back_populates="refresh_tokens")

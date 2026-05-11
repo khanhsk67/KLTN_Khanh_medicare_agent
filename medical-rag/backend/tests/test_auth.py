@@ -213,11 +213,29 @@ class TestRefreshToken:
     async def test_refresh_token_success(
         self, client: AsyncClient, test_db: AsyncSession
     ):
-        """Refresh token hợp lệ → 200 với access_token mới."""
-        from app.core.security import create_refresh_token
+        """Refresh token hợp lệ → 200 với access_token + refresh_token mới (rotation)."""
+        import uuid
+        from datetime import datetime, timedelta, timezone
+
+        from app.core.config import settings
+        from app.core.security import create_refresh_token, hash_token
+        from app.db.models.refresh_token import RefreshToken
 
         user = await create_test_user(test_db)
-        refresh_token = create_refresh_token(str(user.id))
+        refresh_token, _jti = create_refresh_token(str(user.id))
+
+        # Phải lưu hash vào DB để service tìm thấy (login flow thật làm việc này)
+        test_db.add(
+            RefreshToken(
+                id=uuid.uuid4(),
+                user_id=user.id,
+                token_hash=hash_token(refresh_token),
+                expires_at=datetime.now(timezone.utc)
+                + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS),
+                is_revoked=False,
+            )
+        )
+        await test_db.commit()
 
         res = await client.post(
             "/api/auth/refresh",
@@ -227,6 +245,8 @@ class TestRefreshToken:
         data = res.json()
         assert "access_token" in data
         assert "refresh_token" in data
+        # Refresh token mới phải khác cái cũ (rotation)
+        assert data["refresh_token"] != refresh_token
 
     async def test_refresh_with_access_token_fails(
         self, client: AsyncClient, test_db: AsyncSession

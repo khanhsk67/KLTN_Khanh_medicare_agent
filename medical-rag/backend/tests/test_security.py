@@ -76,11 +76,12 @@ class TestJWTToken:
         assert payload["type"] == "access"
 
     def test_refresh_token_decode(self):
-        """create_refresh_token(user_id: str) → payload chứa sub và type="refresh"."""
-        token = create_refresh_token("user-456")
+        """create_refresh_token(user_id: str) → (token, jti); payload chứa sub, jti, type="refresh"."""
+        token, jti = create_refresh_token("user-456")
         payload = decode_token(token)
         assert payload["sub"] == "user-456"
         assert payload["type"] == "refresh"
+        assert payload["jti"] == jti
 
     def test_invalid_token_raises_401(self):
         """Token không hợp lệ → decode_token raises HTTPException 401."""
@@ -103,7 +104,7 @@ class TestJWTToken:
 
     def test_refresh_token_type_is_refresh(self):
         """Refresh token có type="refresh", KHÔNG phải "access"."""
-        token = create_refresh_token("test-user")
+        token, _ = create_refresh_token("test-user")
         payload = decode_token(token)
         assert payload["type"] == "refresh"
         assert payload["type"] != "access"
@@ -119,7 +120,7 @@ class TestJWTToken:
         """Cùng user_id → access token và refresh token là hai chuỗi khác nhau."""
         user_id = "same-user-id"
         access = create_access_token({"sub": user_id})
-        refresh = create_refresh_token(user_id)
+        refresh, _ = create_refresh_token(user_id)
         assert access != refresh
 
     def test_token_has_exp_claim(self):

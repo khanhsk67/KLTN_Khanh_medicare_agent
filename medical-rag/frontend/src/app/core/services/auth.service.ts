@@ -1,23 +1,27 @@
-import { Injectable, signal, computed, inject } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
-import { Router } from '@angular/router';
-import { Observable, tap } from 'rxjs';
+import { Observable } from 'rxjs';
 import {
   LoginRequest,
   RegisterRequest,
   TokenResponse,
-  UserProfile
+  UserProfile,
 } from '../models';
+
+const ACCESS_KEY = 'access_token';
+const REFRESH_KEY = 'refresh_token';
 
 @Injectable({ providedIn: 'root' })
 export class AuthService {
-   constructor(private http: HttpClient) {}
+  private http = inject(HttpClient);
+
+  // ───────────── API calls (không xử lý logic, caller tự quyết định) ─────────────
 
   login(data: LoginRequest): Observable<TokenResponse> {
     return this.http.post<TokenResponse>('/api/auth/login', data);
   }
 
-  register(data: any): Observable<UserProfile> {
+  register(data: RegisterRequest): Observable<UserProfile> {
     return this.http.post<UserProfile>('/api/auth/register', data);
   }
 
@@ -25,19 +29,31 @@ export class AuthService {
     return this.http.get<UserProfile>('/api/auth/me');
   }
 
-  logout() {
-    return this.http.post(`/api/auth/logout`, {});
+  refresh(): Observable<TokenResponse> {
+    const refresh_token = this.getRefreshToken();
+    return this.http.post<TokenResponse>('/api/auth/refresh', { refresh_token });
   }
 
-  getAccessToken(): string | null {
-    return localStorage.getItem('access_token');
+  logout(): Observable<unknown> {
+    const refresh_token = this.getRefreshToken();
+    return this.http.post('/api/auth/logout', { refresh_token });
   }
 
-  getToken(): string | null {
-    return localStorage.getItem('access_token');
+  // ───────────── Storage helpers (caller dùng để lưu/đọc/xoá token) ─────────────
+
+  setSession(tokens: TokenResponse): void {
+    localStorage.setItem(ACCESS_KEY, tokens.access_token);
+    localStorage.setItem(REFRESH_KEY, tokens.refresh_token);
   }
 
-  isAuthenticated(): boolean {
-    return !!localStorage.getItem('access_token');
+  clearSession(): void {
+    localStorage.removeItem(ACCESS_KEY);
+    localStorage.removeItem(REFRESH_KEY);
+    localStorage.removeItem('user');
   }
+
+  getAccessToken(): string | null { return localStorage.getItem(ACCESS_KEY); }
+  getRefreshToken(): string | null { return localStorage.getItem(REFRESH_KEY); }
+  getToken(): string | null { return this.getAccessToken(); }
+  isAuthenticated(): boolean { return !!this.getAccessToken(); }
 }

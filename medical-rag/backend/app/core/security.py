@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
+import hashlib
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
-import hashlib
-import secrets
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
@@ -46,27 +46,23 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
 # JWT - Refresh Token
 # ---------------------------------------------------------------------------
 
-def create_refresh_token(user_id: str) -> tuple[str, str]:
+def create_refresh_token(user_id: str, expires_delta: timedelta | None = None) -> tuple[str, str]:
     """
-    Tạo refresh token và trả về (token, jti)
-    jti (JWT ID) dùng để tracking và revoke
+    Tạo refresh token kèm jti (token id) để có thể revoke từng token cụ thể.
+    Trả về (token, jti).
     """
-    jti = secrets.token_urlsafe(32)
-    expire = datetime.now(timezone.utc) + timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
-
-    payload = {
-        "sub": user_id,
-        "type": "refresh",
-        "jti": jti,
-        "exp": expire,
-    }
+    jti = str(uuid.uuid4())
+    expire = datetime.now(timezone.utc) + (
+        expires_delta or timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    )
+    payload = {"sub": user_id, "jti": jti, "exp": expire, "type": "refresh"}
     token = jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
     return token, jti
 
 
 def hash_token(token: str) -> str:
-    """Hash token để lưu vào database (không lưu plaintext)"""
-    return hashlib.sha256(token.encode()).hexdigest()
+    """SHA-256 hash của refresh token để lưu vào DB (không lưu plain text)."""
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
 # ---------------------------------------------------------------------------
