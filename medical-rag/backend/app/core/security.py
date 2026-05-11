@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
+import hashlib
+import uuid
 from datetime import datetime, timedelta, timezone
 from typing import Annotated
 
@@ -38,6 +40,25 @@ def create_access_token(data: dict, expires_delta: timedelta | None = None) -> s
     )
     payload = {**data, "exp": expire, "type": "access"}
     return jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+
+
+def create_refresh_token(user_id: str, expires_delta: timedelta | None = None) -> tuple[str, str]:
+    """
+    Tạo refresh token kèm jti (token id) để có thể revoke từng token cụ thể.
+    Trả về (token, jti).
+    """
+    jti = str(uuid.uuid4())
+    expire = datetime.now(timezone.utc) + (
+        expires_delta or timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+    )
+    payload = {"sub": user_id, "jti": jti, "exp": expire, "type": "refresh"}
+    token = jwt.encode(payload, settings.JWT_SECRET_KEY, algorithm=settings.JWT_ALGORITHM)
+    return token, jti
+
+
+def hash_token(token: str) -> str:
+    """SHA-256 hash của refresh token để lưu vào DB (không lưu plain text)."""
+    return hashlib.sha256(token.encode("utf-8")).hexdigest()
 
 
 def decode_token(token: str) -> dict:

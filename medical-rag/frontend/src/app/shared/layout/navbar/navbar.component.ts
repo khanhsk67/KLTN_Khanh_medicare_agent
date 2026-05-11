@@ -18,17 +18,11 @@ export class NavbarComponent {
   private readonly router = inject(Router);
 
   logout(): void {
-    this.authService.logout().subscribe({
-      next: () => {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user');
-        this.router.navigate(['/auth/login']);
-      },
-      error: () => {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('user');
-        this.router.navigate(['/auth/login']);
-      }
-    });
+    // Dù API thành công hay fail (token đã revoke, server down...) đều phải clear local
+    const goLogin = () => {
+      this.authService.clearSession();
+      this.router.navigate(['/auth/login']);
+    };
+    this.authService.logout().subscribe({ next: goLogin, error: goLogin });
   }
 }
