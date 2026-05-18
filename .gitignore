@@ -58,6 +58,7 @@ doc/
 
 # Claude Code internal
 .claude/
+.codex_tmp/
 .sfdx/
 
 # Docker

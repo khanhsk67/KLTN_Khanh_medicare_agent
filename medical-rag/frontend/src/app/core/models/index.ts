@@ -39,6 +39,9 @@ export type User = UserProfile;
 export interface ChatRequest {
   session_id?: string;
   message: string;
+  /** Multi-image (mới — khuyến nghị). BE cũng còn chấp nhận image_base64 cho 1 ảnh đơn. */
+  images_base64?: string[];
+  /** @deprecated dùng images_base64. Backend vẫn nhận để tương thích ngược. */
   image_base64?: string;
 }
 
@@ -71,7 +74,10 @@ export interface MessageItem {
   session_id: string;
   role: 'user' | 'assistant';
   content: string;
-  image_url?: string;
+  /** Danh sách data URL của ảnh đính kèm (hỗ trợ multi-image / message). */
+  image_urls?: string[];
+  /** Cache kết quả phân tích Vision per-image (không hiển thị UI, dùng debug). */
+  image_analysis?: Array<Record<string, unknown>>;
   created_at: string;
   urgency_level?: 'normal' | 'warning' | 'emergency';
   sources?: SourceChunk[];
@@ -98,7 +104,7 @@ export interface PaginatedSessions {
   items: SessionSummary[];
   total: number;
   page: number;
-  size: number;
+  page_size: number;
   pages: number;
 }
 

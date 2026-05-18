@@ -35,12 +35,12 @@ export class ChatService {
   async *streamChat(
     sessionId: string | undefined,
     message: string,
-    imageBase64?: string
+    imagesBase64?: string[]
   ): AsyncGenerator<string> {
     const token = this.authService.getToken();
     const body: Record<string, unknown> = { message };
     if (sessionId) body['session_id'] = sessionId;
-    if (imageBase64) body['image_base64'] = imageBase64;
+    if (imagesBase64 && imagesBase64.length > 0) body['images_base64'] = imagesBase64;
 
     const response = await fetch('/api/chat/stream', {
       method: 'POST',

@@ -2,6 +2,7 @@ import { Component, signal, computed, effect, inject } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 import { catchError, filter } from 'rxjs/operators';
+import { ButtonModule } from 'primeng/button';
 import { CardModule } from 'primeng/card';
 import { ChartModule } from 'primeng/chart';
 import { TimelineModule } from 'primeng/timeline';
@@ -24,9 +25,10 @@ import { SeverityPipe } from '../../shared/pipes/severity.pipe';
   standalone: true,
   imports: [
     FormsModule,
-    CardModule, 
-    ChartModule, 
-    TimelineModule, 
+    ButtonModule,
+    CardModule,
+    ChartModule,
+    TimelineModule,
     SelectButtonModule,
     ProgressSpinnerModule, 
     ChipModule, 
@@ -46,11 +48,22 @@ export class AnalysisComponent {
   private readonly api = inject(ApiService);
   private readonly messageService = inject(MessageService);
 
+  private readonly TIMELINE_PAGE_SIZE = 10;
+
   readonly periodDays = signal(30);
   readonly isLoading = signal(false);
   readonly analysisData = signal<HealthDashboard | null>(null);
   readonly timelineEvents = signal<HealthTimelineItem[]>([]);
   readonly weatherData = signal<HealthRiskResponse | null>(null);
+  readonly timelineDisplayCount = signal(this.TIMELINE_PAGE_SIZE);
+
+  readonly displayedTimelineEvents = computed(() =>
+    this.timelineEvents().slice(0, this.timelineDisplayCount())
+  );
+
+  readonly remainingTimelineCount = computed(() =>
+    Math.max(0, this.timelineEvents().length - this.timelineDisplayCount())
+  );
 
   
   filterKnowlegde : string = '';
@@ -112,6 +125,7 @@ export class AnalysisComponent {
     const d = this.analysisData();
     if (!d?.severity_distribution) return null;
     const dist = d.severity_distribution;
+    if (dist.severe + dist.moderate + dist.mild === 0) return null;
     return {
       labels: ['Nghiêm trọng', 'Trung bình', 'Nhẹ'],
       datasets: [{
@@ -143,10 +157,15 @@ export class AnalysisComponent {
     });
   }
 
+  loadMoreTimeline(): void {
+    this.timelineDisplayCount.update(c => c + this.TIMELINE_PAGE_SIZE);
+  }
+
   private loadAll(days: number): void {
     this.isLoading.set(true);
     this.analysisData.set(null);
     this.timelineEvents.set([]);
+    this.timelineDisplayCount.set(this.TIMELINE_PAGE_SIZE);
 
     forkJoin({
       dashboard: this.api.getDashboard(days),

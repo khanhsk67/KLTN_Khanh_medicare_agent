@@ -5,7 +5,6 @@ Medical RAG — FastAPI application entry point.
 import logging
 from contextlib import asynccontextmanager
 
-import google.generativeai as genai
 from fastapi import FastAPI, Request, status
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
@@ -151,16 +150,15 @@ async def health_check() -> dict:
         logger.error("Qdrant health check failed: %s", exc)
         checks["qdrant"] = f"error: {exc}"
 
-    # Gemini API — kiểm tra key có cấu hình không
+    # OpenAI API — kiểm tra key có cấu hình không
     try:
-        if not settings.GOOGLE_API_KEY:
-            checks["gemini"] = "error: GOOGLE_API_KEY not set"
+        if not settings.OPENAI_API_KEY:
+            checks["openai"] = "error: OPENAI_API_KEY not set"
         else:
-            genai.configure(api_key=settings.GOOGLE_API_KEY)
-            checks["gemini"] = "ok"
+            checks["openai"] = "ok"
     except Exception as exc:
-        logger.error("Gemini health check failed: %s", exc)
-        checks["gemini"] = f"error: {exc}"
+        logger.error("OpenAI health check failed: %s", exc)
+        checks["openai"] = f"error: {exc}"
 
     all_ok = all(v == "ok" for v in checks.values())
     return {

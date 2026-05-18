@@ -2,7 +2,7 @@
 setlocal EnableDelayedExpansion
 
 :: ============================================================
-:: MedConsult AI — Script khoi dong (Windows)
+:: MediCare AI — Script khoi dong (Windows)
 :: Chay tu thu muc medical-rag/
 :: ============================================================
 
@@ -107,8 +107,8 @@ if "%1"=="check-qdrant" (
 :: ── dev (backend + frontend concurrently) ────────────────────
 if "%1"=="dev" (
     echo Starting backend and frontend in separate windows...
-    start "MedConsult Backend" cmd /k "cd backend && python -m uvicorn main:app --reload --port 8000"
-    start "MedConsult Frontend" cmd /k "cd frontend && ng serve --port 4000"
+    start "MediCare Backend" cmd /k "cd backend && python -m uvicorn main:app --reload --port 8000"
+    start "MediCare Frontend" cmd /k "cd frontend && ng serve --port 4000"
     echo [OK] Both servers starting. Backend: http://localhost:8000 | Frontend: http://localhost:4000
     goto :end
 )
@@ -118,7 +118,7 @@ echo [ERROR] Unknown command: %1
 
 :show_help
 echo.
-echo  MedConsult AI — Available commands:
+echo  MediCare AI — Available commands:
 echo  ─────────────────────────────────────────────────────────
 echo   start.bat install      - Cai dat tat ca dependencies (pip + npm)
 echo   start.bat migrate      - Chay Alembic migration (can PostgreSQL)

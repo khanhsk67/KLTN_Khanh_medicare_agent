@@ -61,10 +61,14 @@ class RefreshTokenRequest(BaseModel):
 class ChatRequest(BaseModel):
     session_id: uuid.UUID | None = None
     message: str = Field(min_length=1, max_length=4096)
-    image_base64: str | None = None  # base64 encoded image
+    # Mới (khuyến nghị): danh sách ảnh base64 hoặc data URL. Hỗ trợ multi-image / turn.
+    images_base64: list[str] | None = Field(default=None, max_length=8)
+    # Backward compat: 1 ảnh duy nhất. Nếu cả 2 được set → cộng dồn vào images_base64.
+    image_base64: str | None = None
 
 
 class SourceChunk(BaseModel):
+    chunk_id: str | None = None
     content: str
     source_file: str
     page_number: int | None = None
@@ -99,7 +103,8 @@ class MessageResponse(BaseModel):
     session_id: uuid.UUID
     role: str
     content: str
-    image_url: str | None = None
+    image_urls: list[str] | None = None
+    image_analysis: list[dict[str, Any]] | None = None
     sources: Any | None = None
     urgency_level: str | None = None
     created_at: datetime
@@ -212,15 +217,20 @@ class AgentState(TypedDict, total=False):
     user_id: str
     session_id: str
     user_message: str
-    image_base64: str | None
-    image_mime_type: str | None
+    # Multi-image: parallel lists (cùng độ dài).
+    images_base64: list[str]
+    image_mime_types: list[str]
+    reused_image_from_history: bool  # True khi ảnh được reuse từ message cũ
+    chat_history: list[dict]
+    collection_alias: str | None  # 'clean' | 'raw' | None — chọn collection RAG
 
-    # Vision
-    image_analysis_result: dict[str, Any] | None
+    # Vision — list[dict] per-image kết quả phân tích (cùng độ dài images_base64)
+    image_analysis_result: list[dict[str, Any]] | None
 
     # RAG
     retrieved_chunks: list[SourceChunk]
     rag_context: str
+    insufficient_context: bool  # True khi RAG không tìm thấy chunk nào đạt threshold
 
     # Agent routing
     agent_type: Literal["chatbot", "rule_medical", "image_medical", "treatment_analysis"]

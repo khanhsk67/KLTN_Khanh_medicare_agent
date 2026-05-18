@@ -5,7 +5,7 @@ from typing import List
 import logging
 logger = logging.getLogger(__name__)
 
-import google.generativeai as genai
+from openai import OpenAI
 from qdrant_client import QdrantClient
 from qdrant_client.http import models as qmodels
 
@@ -18,7 +18,7 @@ class QdrantService:
         self.client = QdrantClient(url=settings.QDRANT_URL)
         self.collection_name = settings.QDRANT_COLLECTION_NAME
         self.dimensions = settings.EMBEDDING_DIMENSIONS  # 768
-        genai.configure(api_key=settings.GOOGLE_API_KEY)
+        self.openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
     # ------------------------------------------------------------------
     # Collection management
@@ -40,51 +40,53 @@ class QdrantService:
     # ------------------------------------------------------------------
     async def embed_text(self, text: str) -> List[float]:
         loop = asyncio.get_event_loop()
-        # genai SDK is sync — run in executor to avoid blocking event loop
+        # openai SDK is sync — run in executor to avoid blocking event loop
         result = await loop.run_in_executor(
             None,
-            lambda: genai.embed_content(
+            lambda: self.openai_client.embeddings.create(
                 model=settings.EMBEDDING_MODEL,
-                content=text,
-                output_dimensionality=768,
+                input=text,
+                dimensions=settings.EMBEDDING_DIMENSIONS,
             ),
         )
-        return result["embedding"]
+        return result.data[0].embedding
 
     # ------------------------------------------------------------------
     # Search
     # ------------------------------------------------------------------
-    async def search(self, query: str, top_k: int = 5) -> List[SourceChunk]:
-        logger.info("[Qdrant] Search config | url=%s | collection=%s | top_k=%d", settings.QDRANT_URL, self.collection_name, top_k)
+    async def search(
+        self,
+        query: str,
+        top_k: int = 5,
+        score_threshold: float = 0.65,
+        collection_name: str | None = None,
+    ) -> List[SourceChunk]:
+        # Cho phép override collection per-request (A/B test giữa clean/raw)
+        collection = collection_name or self.collection_name
+        logger.info(
+            "[Qdrant] Search config | url=%s | collection=%s | top_k=%d | score_threshold=%.2f",
+            settings.QDRANT_URL, collection, top_k, score_threshold,
+        )
         logger.info("Đây là query trước khi làm gì đó: query=%s", query)
         query_vector = await self.embed_text(query)
-        logger.info("đây là query sau khi embed: %s", query_vector[:5])  
+        logger.info("đây là query sau khi embed: %s", query_vector[:10])
         try:
             count_results = self.client.count(
-                collection_name=self.collection_name,
+                collection_name=collection,
                 exact=True,
             )
             logger.info(
                 "[Qdrant] Collection point count | collection=%s | points=%d",
-                self.collection_name,
+                collection,
                 count_results.count,
             )
 
-        # results = self.client.search(
-        #     collection_name=self.collection_name,
-        #     query_vector=query_vector,
-        #     limit=top_k,
-        #     with_payload=True,
-        #     # score_threshold=0.65,
-        # )
-
-
             response = self.client.query_points(
-                collection_name=self.collection_name,
+                collection_name=collection,
                 query=query_vector,
                 limit=top_k,
                 with_payload=True,
-                # score_threshold=0.65,
+                score_threshold = score_threshold,
             )
 
         except Exception:
@@ -98,6 +100,7 @@ class QdrantService:
             payload = hit.payload or {}
             chunks.append(
                 SourceChunk(
+                    chunk_id=str(hit.id),
                     content=payload.get("content", ""),
                     source_file=payload.get("source_file", ""),
                     page_number=payload.get("page_number"),

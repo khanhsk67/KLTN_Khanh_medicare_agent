@@ -9,6 +9,7 @@
       [options]="periodOptions"
       [ngModel]="periodDays()"
       (ngModelChange)="periodDays.set($event)"
+      [allowEmpty]="false"
       optionLabel="label"
       optionValue="value"/>
   </div>
@@ -143,7 +144,7 @@
       </div>
 
       <div class="col-12 lg:col-6">
-        <p-card header="Mức độ triệu chứng">
+        <p-card header="Mức độ triệu chứng" styleClass="h-full">
           @if (severityChartData()) {
             <p-chart class="mt-3" type="doughnut" [data]="severityChartData()" [options]="doughnutOptions" width="100%" height="auto"/>
           } @else {
@@ -159,30 +160,42 @@
 
     <!-- Health timeline -->
     @if (timelineEvents().length > 0) {
-      <p-card header="Timeline sức khỏe">
-        <p-timeline class="gap-1" [value]="timelineEvents()" align="left">
+      <p-card header="Timeline sức khỏe" styleClass="timeline-card">
+        <p-timeline class="gap-1" [value]="displayedTimelineEvents()" align="left">
           <ng-template #content let-event>
             <p-card styleClass="mb-2">
               <div class="flex align-items-center
-                          justify-content-between gap-2">
+                          justify-content-between gap-2 flex-wrap">
                 <span class="font-semibold">{{ event.main_symptom }}</span>
                 <p-tag [value]="event.severity | severity"
                        [severity]="$any(event.severity | severity:'tag')"/>
               </div>
-              @if (event.specialty) {
-                <div class="text-sm text-color-secondary mt-1">
-                  <i class="pi pi-building mr-1"></i>
-                  {{ event.specialty }}
-                </div>
-              }
+              <div class="text-sm text-color-secondary mt-2
+                          flex align-items-center gap-3 flex-wrap">
+                <span class="flex align-items-center gap-1">
+                  <i class="pi pi-clock"></i>
+                  {{ event.date | relativeTime }}
+                </span>
+                @if (event.specialty) {
+                  <span class="flex align-items-center gap-1">
+                    <i class="pi pi-building"></i>
+                    {{ event.specialty }}
+                  </span>
+                }
+              </div>
             </p-card>
           </ng-template>
-          <ng-template #opposite let-event>
-            <span class="text-sm text-color-secondary">
-              {{ event.date | relativeTime }}
-            </span>
-          </ng-template>
         </p-timeline>
+
+        @if (remainingTimelineCount() > 0) {
+          <div class="flex justify-content-center mt-3">
+            <p-button
+              [label]="'Xem thêm (' + remainingTimelineCount() + ')'"
+              icon="pi pi-chevron-down"
+              [text]="true"
+              (click)="loadMoreTimeline()"/>
+          </div>
+        }
       </p-card>
     }
 

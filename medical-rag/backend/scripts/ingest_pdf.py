@@ -16,7 +16,7 @@ import time
 # Add backend/ to sys.path so app.* imports work
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-import google.generativeai as genai
+from openai import OpenAI
 from langchain_community.document_loaders import PyPDFLoader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from qdrant_client import QdrantClient
@@ -25,17 +25,19 @@ from tqdm import tqdm
 
 from app.core.config import settings
 
+_openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
+
 
 # ---------------------------------------------------------------------------
 # Config
 # ---------------------------------------------------------------------------
-CHUNK_SIZE = 1800              
+CHUNK_SIZE = 1800
 CHUNK_OVERLAP = 200
-BATCH_SIZE = 20
+BATCH_SIZE = 50
 SCORE_THRESHOLD = 0.65
-SLEEP_PER_EMBED = 0.65         
+SLEEP_PER_EMBED = 0.05         # OpenAI tier 1 cho phép ~3000 RPM → 0.05s là an toàn
 SLEEP_BETWEEN_BATCHES = 0.0
-RETRY_SLEEP_DEFAULT = 65.0     
+RETRY_SLEEP_DEFAULT = 30.0
 MAX_RETRIES = 5             
 
 
@@ -64,15 +66,15 @@ def _parse_retry_delay(err: Exception) -> float:
 def embed_with_retry(text: str, model: str) -> list[float]:
     for attempt in range(1, MAX_RETRIES + 1):
         try:
-            result = genai.embed_content(
+            result = _openai_client.embeddings.create(
                 model=model,
-                content=text,
-                output_dimensionality=768,
+                input=text,
+                dimensions=settings.EMBEDDING_DIMENSIONS,
             )
-            time.sleep(SLEEP_PER_EMBED)  # stay under 100 RPM
-            return result["embedding"]
+            time.sleep(SLEEP_PER_EMBED)
+            return result.data[0].embedding
         except Exception as e:
-            if "429" in str(e) or "quota" in str(e).lower() or "ResourceExhausted" in type(e).__name__:
+            if "429" in str(e) or "rate_limit" in str(e).lower() or "quota" in str(e).lower():
                 wait = _parse_retry_delay(e)
                 if attempt < MAX_RETRIES:
                     tqdm.write(f"  Rate limit — sleeping {wait:.1f}s (attempt {attempt}/{MAX_RETRIES})")
@@ -113,7 +115,6 @@ def ingest(folder: str, collection_name: str, limit: int = 0) -> None:
            Re-run the next day — already-embedded chunks are skipped via dedup.
     """
     # Init
-    genai.configure(api_key=settings.GOOGLE_API_KEY)
     client = QdrantClient(url=settings.QDRANT_URL)
 
     # Ensure collection exists

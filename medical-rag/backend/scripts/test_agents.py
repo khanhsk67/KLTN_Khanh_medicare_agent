@@ -4,8 +4,8 @@ Script kiểm tra agents theo 3 cấp độ:
 
   Level 1 — Import check     : không cần service nào
   Level 2 — Prompts + schema : không cần service nào
-  Level 3 — Chatbot agent    : chỉ cần GOOGLE_API_KEY
-  Level 4 — Full pipeline    : cần GOOGLE_API_KEY + PostgreSQL + Qdrant
+  Level 3 — Chatbot agent    : chỉ cần OPENAI_API_KEY
+  Level 4 — Full pipeline    : cần OPENAI_API_KEY + PostgreSQL + Qdrant
 
 Chạy:
   cd medical-rag/backend
@@ -160,11 +160,11 @@ def test_level2_prompts_and_schema() -> bool:
 
 
 # ---------------------------------------------------------------------------
-# LEVEL 3 — Chatbot agent (chỉ cần GOOGLE_API_KEY)
+# LEVEL 3 — Chatbot agent (chỉ cần OPENAI_API_KEY)
 # ---------------------------------------------------------------------------
 
 async def test_level3_chatbot_agent() -> bool:
-    heading("LEVEL 3 — Chatbot agent (cần GOOGLE_API_KEY)")
+    heading("LEVEL 3 — Chatbot agent (cần OPENAI_API_KEY)")
     passed = True
 
     try:
@@ -222,7 +222,7 @@ async def test_level3_chatbot_agent() -> bool:
 
 
 # ---------------------------------------------------------------------------
-# LEVEL 4 — Full pipeline (cần PostgreSQL + Qdrant + GOOGLE_API_KEY)
+# LEVEL 4 — Full pipeline (cần PostgreSQL + Qdrant + OPENAI_API_KEY)
 # ---------------------------------------------------------------------------
 
 async def test_level4_full_pipeline() -> bool:
@@ -313,7 +313,7 @@ async def main(run_all: bool) -> None:
     results["Level 1 (imports)"] = test_level1_imports()
     results["Level 2 (prompts/schema)"] = test_level2_prompts_and_schema()
 
-    # Level 3 cần GOOGLE_API_KEY
+    # Level 3 cần OPENAI_API_KEY
     try:
         results["Level 3 (chatbot agent)"] = await test_level3_chatbot_agent()
     except Exception as exc:

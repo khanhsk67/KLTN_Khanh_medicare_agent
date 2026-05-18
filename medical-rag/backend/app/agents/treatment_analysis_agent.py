@@ -13,7 +13,7 @@ from collections import Counter
 from datetime import date, datetime, timedelta
 from typing import Any
 
-import google.generativeai as genai
+from openai import OpenAI
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,7 +23,7 @@ from app.db.models.treatment_record import TreatmentRecord
 
 logger = logging.getLogger(__name__)
 
-genai.configure(api_key=settings.GOOGLE_API_KEY)
+_openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 MIN_RECORDS = 3  # Tối thiểu để phân tích xu hướng có ý nghĩa
 
@@ -32,10 +32,12 @@ MIN_RECORDS = 3  # Tối thiểu để phân tích xu hướng có ý nghĩa
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _call_gemini(prompt: str) -> str:
-    model = genai.GenerativeModel(settings.LLM_MODEL)
-    response = model.generate_content(prompt)
-    return response.text
+def _call_openai(prompt: str) -> str:
+    response = _openai_client.chat.completions.create(
+        model=settings.LLM_MODEL,
+        messages=[{"role": "user", "content": prompt}],
+    )
+    return response.choices[0].message.content
 
 
 def _extract_json(text: str) -> dict[str, Any]:
@@ -47,7 +49,7 @@ def _extract_json(text: str) -> dict[str, Any]:
 
 
 def _fallback_analysis(stats: dict[str, Any]) -> dict[str, Any]:
-    """Trả về analysis tối giản khi Gemini gặp lỗi."""
+    """Trả về analysis tối giản khi OpenAI gặp lỗi."""
     severity = stats.get("severity_distribution", {})
     return {
         "health_trend": "stable",
@@ -175,7 +177,7 @@ async def analyze_treatment_history(
 
     loop = asyncio.get_running_loop()
     try:
-        raw_text = await loop.run_in_executor(None, _call_gemini, prompt)
+        raw_text = await loop.run_in_executor(None, _call_openai, prompt)
         analysis = _extract_json(raw_text)
         logger.info(
             "Treatment analysis OK: trend=%s, records=%d",

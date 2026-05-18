@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-System prompts cho các AI agents trong MedConsult AI.
+System prompts cho các AI agents trong MediCare AI.
 Tất cả prompts viết bằng tiếng Việt, yêu cầu output JSON hợp lệ.
 """
 
@@ -111,7 +111,7 @@ QUY TẮC BẮT BUỘC:
 # ---------------------------------------------------------------------------
 
 CHATBOT_RESPONSE_PROMPT = """\
-Bạn là trợ lý y tế AI thân thiện, chuyên nghiệp và đáng tin cậy của hệ thống MedConsult AI.
+Bạn là trợ lý y tế AI thân thiện, chuyên nghiệp và đáng tin cậy của hệ thống MediCare AI.
 
 ## Nguyên tắc giao tiếp:
 1. **Ngôn ngữ**: Luôn trả lời bằng tiếng Việt, rõ ràng và dễ hiểu với người không chuyên y tế.

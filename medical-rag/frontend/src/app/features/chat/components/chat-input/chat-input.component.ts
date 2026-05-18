@@ -4,6 +4,15 @@ import { ButtonModule } from 'primeng/button';
 import { Textarea } from 'primeng/textarea';
 import { TooltipModule } from 'primeng/tooltip';
 
+interface SelectedImage {
+  file: File;
+  preview: string;   // full data URL (cho <img [src])
+  base64: string;    // chỉ phần base64 (gửi BE)
+  name: string;
+}
+
+const MAX_IMAGES = 8;
+
 @Component({
   selector: 'app-chat-input',
   standalone: true,
@@ -16,36 +25,53 @@ export class ChatInputComponent {
 
   @Input() disabled = false;
   @Input() centered = false;
-  @Output() messageSent = new EventEmitter<{ text: string; imageBase64?: string; imagePreview?: string }>();
+  @Output() messageSent = new EventEmitter<{
+    text: string;
+    imagesBase64: string[];
+    imagePreviews: string[];
+  }>();
 
   messageText = '';
-  readonly selectedImage = signal<{
-    file: File; preview: string; base64: string; name: string
-  } | null>(null);
+  readonly selectedImages = signal<SelectedImage[]>([]);
+  readonly maxImages = MAX_IMAGES;
 
   onFileSelected(event: Event): void {
     const input = event.target as HTMLInputElement;
-    const file = input.files?.[0];
-    if (!file) return;
+    const files = input.files ? Array.from(input.files) : [];
+    if (files.length === 0) return;
 
-    const reader = new FileReader();
-    reader.onload = (e) => {
-      const dataUrl = e.target?.result as string;
-      this.ngZone.run(() => {
-        this.selectedImage.set({
-          file,
-          preview: dataUrl,
-          base64: dataUrl.split(',')[1],
-          name: file.name
+    const currentCount = this.selectedImages().length;
+    const remainingSlots = MAX_IMAGES - currentCount;
+    const accepted = files.slice(0, remainingSlots);
+
+    accepted.forEach(file => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const dataUrl = e.target?.result as string;
+        this.ngZone.run(() => {
+          this.selectedImages.update(list => [
+            ...list,
+            {
+              file,
+              preview: dataUrl,
+              base64: dataUrl.split(',')[1],
+              name: file.name,
+            }
+          ]);
         });
-      });
-    };
-    reader.readAsDataURL(file);
+      };
+      reader.readAsDataURL(file);
+    });
+
     input.value = '';
   }
 
-  removeImage(): void {
-    this.selectedImage.set(null);
+  removeImage(index: number): void {
+    this.selectedImages.update(list => list.filter((_, i) => i !== index));
+  }
+
+  clearImages(): void {
+    this.selectedImages.set([]);
   }
 
   onKeydown(event: KeyboardEvent): void {
@@ -59,12 +85,13 @@ export class ChatInputComponent {
     const text = this.messageText.trim();
     if (!text || this.disabled) return;
 
+    const imgs = this.selectedImages();
     this.messageSent.emit({
       text,
-      imageBase64: this.selectedImage()?.base64,
-      imagePreview: this.selectedImage()?.preview
+      imagesBase64: imgs.map(i => i.base64),
+      imagePreviews: imgs.map(i => i.preview),
     });
     this.messageText = '';
-    this.selectedImage.set(null);
+    this.selectedImages.set([]);
   }
 }

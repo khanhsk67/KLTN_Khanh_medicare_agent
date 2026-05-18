@@ -4,12 +4,12 @@
 <div class="flex flex-column gap-3 p-4">
 
   <!-- Header -->
-  <div class="flex align-items-center justify-content-between">
+  <div class="flex align-items-center justify-content-between flex-wrap gap-2">
     <h1 class="m-0 text-2xl font-bold">Lịch sử tư vấn</h1>
     <div class="flex align-items-center gap-2">
-      <span class="text-color-secondary text-sm">{{ allSessions().length }} phiên</span>
+      <span class="text-color-secondary text-sm">{{ total() }} phiên</span>
       <p-button label="Làm mới" icon="pi pi-refresh" [text]="true"
-                size="small" (onClick)="loadSessions()"/>
+                size="small" (onClick)="refresh()"/>
     </div>
   </div>
 
@@ -29,7 +29,7 @@
       }
     </div>
   } @else {
-    <p-dataview [value]="filteredSessions()">
+    <p-dataview [value]="sessions()">
       <ng-template #list let-items>
         @for (s of items; track s.id) {
           <app-session-card
@@ -45,7 +45,7 @@
              style="font-size: 3rem; color: var(--p-text-muted-color)"></i>
           <p class="m-0 text-color-secondary">
             @if (searchQuery()) {
-              Không tìm thấy kết quả cho "́{{ searchQuery() }}"
+              Không tìm thấy kết quả cho "{{ searchQuery() }}"
             } @else {
               Chưa có lịch sử tư vấn
             }
@@ -53,6 +53,16 @@
         </div>
       </ng-template>
     </p-dataview>
+
+    @if (total() > 0) {
+      <p-paginator
+        [first]="firstIndex"
+        [rows]="pageSize()"
+        [totalRecords]="total()"
+        [rowsPerPageOptions]="rowsPerPageOptions"
+        (onPageChange)="onPageChange($event)"
+        styleClass="border-none"/>
+    }
   }
 
 </div>

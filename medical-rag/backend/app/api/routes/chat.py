@@ -8,11 +8,12 @@ import logging
 import uuid
 from typing import Annotated
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from fastapi.responses import StreamingResponse
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.agents.orchestrator import run_medical_graph
+from app.core.config import settings
 from app.core.security import get_current_user
 from app.db.models.chat_session import ChatSession
 from app.db.models.user import User
@@ -38,9 +39,16 @@ async def chat_stream(
     request: ChatRequest,
     current_user: Annotated[User, Depends(get_current_user)],
     db: Annotated[AsyncSession, Depends(get_db)],
+    collection: Annotated[
+        str | None,
+        Query(description="Collection alias: 'clean' | 'raw' | None (default)"),
+    ] = None,
 ) -> StreamingResponse:
     """
     Chat với AI, trả về SSE stream.
+
+    Query params:
+    - collection: 'clean' | 'raw' | None — chọn collection Qdrant cho RAG (A/B test).
 
     Events:
     - start:  {"type":"start","urgency":"routine","session_id":"..."}
@@ -48,6 +56,13 @@ async def chat_stream(
     - done:   {"type":"done","session_id":"...","sources":[...],"confidence":"high","urgency":"..."}
     - error:  {"type":"error","content":"..."}
     """
+    # Validate collection alias sớm — trả 400 thay vì im lặng fallback
+    if collection:
+        try:
+            settings.resolve_collection(collection)
+        except ValueError as exc:
+            raise HTTPException(status_code=400, detail=str(exc))
+
     # Kiểm tra điểm tối thiểu trước khi chat
     await wallet_service.check_minimum_balance(db, current_user.id)
 
@@ -65,7 +80,9 @@ async def chat_stream(
 
         try:
             # Chạy toàn bộ LangGraph pipeline
-            chat_response = await run_medical_graph(request, current_user, db)
+            chat_response = await run_medical_graph(
+                request, current_user, db, collection_alias=collection,
+            )
 
             # Billing: tính và trừ điểm theo token usage thật
             charged_points = 0

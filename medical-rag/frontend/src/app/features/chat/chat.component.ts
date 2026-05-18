@@ -96,8 +96,8 @@ export class ChatComponent implements OnInit {
   }
 
 
-  onMessageSent(payload: { text: string; imageBase64?: string; imagePreview?: string }): void {
-    const { text, imageBase64, imagePreview } = payload;
+  onMessageSent(payload: { text: string; imagesBase64: string[]; imagePreviews: string[] }): void {
+    const { text, imagesBase64, imagePreviews } = payload;
     if (!text || this.isLoading()) return;
 
     const userMsg: MessageItem = {
@@ -105,7 +105,7 @@ export class ChatComponent implements OnInit {
       session_id: this.sessionId() ?? '',
       role: 'user',
       content: text,
-      image_url: imagePreview ?? imageBase64,
+      image_urls: imagePreviews.length > 0 ? imagePreviews : undefined,
       created_at: new Date().toISOString()
     };
     this.messages.update(msgs => [...msgs, userMsg]);
@@ -123,13 +123,13 @@ export class ChatComponent implements OnInit {
     // Chạy stream ngoài zone: zone không block onMicrotaskEmpty,
     // CD kích hoạt ngay sau khi handler synchronous này return.
     this.ngZone.runOutsideAngular(() => {
-      this.runStream(text, imageBase64);
+      this.runStream(text, imagesBase64);
     });
   }
 
-  private async runStream(text: string, imageBase64?: string): Promise<void> {
+  private async runStream(text: string, imagesBase64: string[]): Promise<void> {
     try {
-      const stream = this.chatService.streamChat(this.sessionId(), text, imageBase64);
+      const stream = this.chatService.streamChat(this.sessionId(), text, imagesBase64);
       for await (const raw of stream) {
         let event: { type: string; content?: string; session_id?: string; urgency_level?: string; sources?: unknown[]; balance_remaining?: number; points_charged?: number };
         try {

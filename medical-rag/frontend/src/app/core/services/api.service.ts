@@ -92,10 +92,10 @@ export class ApiService {
   }
 
 
-  getHistory(page = 1, size = 20): Observable<PaginatedSessions> {
+  getHistory(page = 1, pageSize = 10): Observable<PaginatedSessions> {
     const params = new HttpParams()
       .set('page', page)
-      .set('size', size);
+      .set('page_size', pageSize);
     return this.http.get<PaginatedSessions>('/api/history/sessions', { params });
   }
 
@@ -107,12 +107,9 @@ export class ApiService {
     return this.http.delete<void>(`/api/history/sessions/${sessionId}`);
   }
 
-  searchHistory(query: string, page = 1, size = 20): Observable<PaginatedSessions> {
-    const params = new HttpParams()
-      .set('q', query)
-      .set('page', page)
-      .set('size', size);
-    return this.http.get<PaginatedSessions>('/api/history/search', { params });
+  searchHistory(query: string): Observable<SessionSummary[]> {
+    const params = new HttpParams().set('q', query);
+    return this.http.get<SessionSummary[]>('/api/history/search', { params });
   }
 
   createNewSession(): Observable<SessionSummary> {

@@ -27,16 +27,16 @@ async def _save_chat_usage(
     usage_id: uuid.UUID,
 ) -> tuple[int, int]:
     """
-    Lấy token usage từ Gemini response,
+    Lấy token usage từ OpenAI response,
     tính chi phí, trừ điểm, lưu chat_usages.
     Trả về: (charged_points, balance_remaining)
     """
-    # Lấy token từ Gemini usage_metadata
+    # Lấy token từ OpenAI usage
     try:
-        input_tokens  = response.usage_metadata.prompt_token_count or 0
-        output_tokens = response.usage_metadata.candidates_token_count or 0
+        input_tokens  = response.usage.prompt_tokens or 0
+        output_tokens = response.usage.completion_tokens or 0
     except AttributeError:
-        # Fallback nếu Gemini không trả usage (ít xảy ra)
+        # Fallback nếu OpenAI không trả usage (vd streaming không bật include_usage)
         input_tokens, output_tokens = 0, 0
 
     # Tính chi phí
@@ -105,7 +105,8 @@ async def save_message(
     session_id: uuid.UUID,
     role: str,
     content: str,
-    image_url: str | None = None,
+    image_urls: list[str] | None = None,
+    image_analysis: list[dict] | None = None,
     sources: Any | None = None,
     urgency: str | None = None,
 ) -> ChatMessage:
@@ -114,7 +115,8 @@ async def save_message(
         session_id=session_id,
         role=role,
         content=content,
-        image_url=image_url,
+        image_urls=image_urls,
+        image_analysis=image_analysis,
         sources=sources,
         urgency_level=urgency,
     )

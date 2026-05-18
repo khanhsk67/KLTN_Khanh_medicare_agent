@@ -145,12 +145,12 @@ def calculate_chat_cost(
     output_tokens: int
 ) -> tuple[float, int, int]:
     """
-    Tính chi phí từ token usage Gemini.
+    Tính chi phí từ token usage OpenAI.
     Trả về: (cost_usd, cost_vnd, charged_points)
     """
     cost_usd = (
-        input_tokens  * settings.GEMINI_INPUT_PRICE_USD  / 1_000_000 +
-        output_tokens * settings.GEMINI_OUTPUT_PRICE_USD / 1_000_000
+        input_tokens  * settings.OPENAI_INPUT_PRICE_USD  / 1_000_000 +
+        output_tokens * settings.OPENAI_OUTPUT_PRICE_USD / 1_000_000
     )
     cost_vnd       = int(cost_usd * settings.USD_TO_VND_RATE)
     charged_points = math.ceil(cost_vnd / settings.POINT_VALUE_VND)

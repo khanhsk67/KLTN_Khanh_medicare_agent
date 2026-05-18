@@ -12,11 +12,11 @@ _ENV_FILE = Path(__file__).resolve().parents[3] / ".env"
 
 
 class Settings(BaseSettings):
-    # Google Gemini
-    GOOGLE_API_KEY: str
-    LLM_MODEL: str = "gemini-2.0-flash"
-    EMBEDDING_MODEL: str = "models/gemini-embedding-001"
-    EMBEDDING_DIMENSIONS: int = 768
+    # OpenAI
+    OPENAI_API_KEY: str
+    LLM_MODEL: str = "gpt-5.4-mini"
+    EMBEDDING_MODEL: str = "text-embedding-3-small"
+    EMBEDDING_DIMENSIONS: int = 768  # text-embedding-3-small hỗ trợ dimension tùy chỉnh
 
     # PostgreSQL
     POSTGRES_URL: str
@@ -24,6 +24,9 @@ class Settings(BaseSettings):
     # Qdrant
     QDRANT_URL: str = "http://localhost:6333"
     QDRANT_COLLECTION_NAME: str = "medical_docs"
+    # 2 collection để A/B test RAG (clean = preprocessed JSONL, raw = PDF thô)
+    QDRANT_COLLECTION_CLEAN: str = "medical_docs_clean"
+    QDRANT_COLLECTION_RAW: str = "medical_docs_raw"
 
     # JWT
     JWT_SECRET_KEY: str
@@ -45,11 +48,35 @@ class Settings(BaseSettings):
     DAILY_CHECKIN_REWARD: int = 50
     MIN_POINTS_TO_CHAT: int = 20
 
-    # ── Gemini 2.5 Flash Pricing ─────────────────
-    # Nguồn: ai.google.dev/pricing
-    GEMINI_INPUT_PRICE_USD: float = 0.075   # per 1M tokens
-    GEMINI_OUTPUT_PRICE_USD: float = 0.30   # per 1M tokens
+    # ── OpenAI gpt-4o-mini Pricing ─────────────────
+    # ⚠️ Cập nhật theo giá thực tại platform.openai.com/docs/pricing
+    OPENAI_INPUT_PRICE_USD: float = 0.15    # per 1M tokens (placeholder)
+    OPENAI_OUTPUT_PRICE_USD: float = 0.60   # per 1M tokens (placeholder)
     USD_TO_VND_RATE: int = 25000
+
+    def resolve_collection(self, alias: str | None) -> str:
+        """
+        Map alias từ API query param → tên collection thật trong Qdrant.
+        - alias='clean'   → medical_docs_clean
+        - alias='raw'     → medical_docs_raw
+        - alias='default' → QDRANT_COLLECTION_NAME mặc định
+        - alias=None      → QDRANT_COLLECTION_NAME mặc định
+        Raise ValueError nếu alias không hợp lệ.
+        """
+        if not alias:
+            return self.QDRANT_COLLECTION_NAME
+        alias = alias.lower().strip()
+        mapping = {
+            "clean": self.QDRANT_COLLECTION_CLEAN,
+            "raw": self.QDRANT_COLLECTION_RAW,
+            "default": self.QDRANT_COLLECTION_NAME,
+        }
+        if alias not in mapping:
+            raise ValueError(
+                f"Invalid collection alias '{alias}'. "
+                f"Chọn 1 trong: {list(mapping.keys())}"
+            )
+        return mapping[alias]
 
     model_config = ConfigDict(
         env_file=str(_ENV_FILE),

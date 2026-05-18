@@ -10,6 +10,7 @@ import logging
 import re
 import uuid
 from datetime import datetime, timezone
+from typing import Any
 
 from langgraph.graph import END, StateGraph
 from sqlalchemy import select
@@ -61,6 +62,36 @@ def _strip_data_url(image_base64: str) -> str:
     return image_base64
 
 
+# Regex phát hiện user đang tham chiếu ảnh đã gửi trước đó trong cùng phiên.
+# Match một số cụm tiếng Việt phổ biến — không tham vọng bắt 100%,
+# chỉ cần cover các pattern thường gặp khi user follow-up về ảnh.
+_IMAGE_REFERENCE_REGEX = re.compile(
+    r"(?:ảnh|hình|tấm)\s+(?:trên|kia|đó|này|vừa\s*rồi|trước|phía\s*trên|ở\s*trên|đính\s*kèm|ban\s*đầu|vừa\s*gửi)"
+    r"|(?:ảnh|hình|tấm)\s+tôi(?:\s+(?:đã|vừa))?\s+gửi"
+    r"|phân\s*tích\s+(?:lại\s+)?(?:ảnh|hình|tấm)"
+    r"|xem\s*(?:lại|kĩ|kỹ)\s+(?:ảnh|hình|tấm)",
+    re.IGNORECASE,
+)
+
+
+def _message_references_prior_image(text: str | None) -> bool:
+    """True nếu user message có dấu hiệu đang nhắc tới ảnh đã gửi trước đó."""
+    if not text:
+        return False
+    return bool(_IMAGE_REFERENCE_REGEX.search(text))
+
+
+def _find_latest_images_in_history(history: list[dict]) -> list[str]:
+    """Tìm danh sách data URL của user message gần nhất có ảnh. Rỗng nếu không có."""
+    for msg in reversed(history):
+        if msg.get("role") != "user":
+            continue
+        urls = msg.get("image_urls") or []
+        if urls:
+            return list(urls)
+    return []
+
+
 # ---------------------------------------------------------------------------
 # persist_to_db — lưu session, messages, treatment record
 # ---------------------------------------------------------------------------
@@ -107,17 +138,39 @@ async def _persist_to_db(
     state["session_id"] = str(chat_session.id)
 
     # --- User message ---
-    image_b64 = state.get("image_base64")
-    image_mime = state.get("image_mime_type") or "image/jpeg"
-    image_url = f"data:{image_mime};base64,{image_b64}" if image_b64 else None
+    # Nếu ảnh được reuse từ history, không lưu lại image_urls cho message mới
+    # (tránh duplicate base64 blob + tránh hiển thị cùng ảnh hai lần trong UI).
+    images_b64: list[str] = state.get("images_base64") or []
+    mime_types: list[str] = state.get("image_mime_types") or []
+    reused = bool(state.get("reused_image_from_history"))
+
+    image_urls: list[str] | None = None
+    if images_b64 and not reused:
+        image_urls = []
+        for i, b64 in enumerate(images_b64):
+            mime = mime_types[i] if i < len(mime_types) else "image/jpeg"
+            image_urls.append(f"data:{mime};base64,{b64}")
+
+    # Cache phân tích Vision cho fresh images (Phase 2). Skip khi reuse —
+    # analysis cũ đã có sẵn trên message cũ.
+    image_analysis_raw = state.get("image_analysis_result")
+    image_analysis_to_save: list[dict[str, Any]] | None = None
+    if image_analysis_raw and not reused:
+        if isinstance(image_analysis_raw, list):
+            image_analysis_to_save = image_analysis_raw
+        elif isinstance(image_analysis_raw, dict):
+            # Defensive: cũ là dict đơn lẻ — wrap vào list để đồng nhất schema
+            image_analysis_to_save = [image_analysis_raw]
 
     user_msg = ChatMessage(
         session_id=chat_session.id,
         role="user",
         content=state.get("user_message", ""),
-        image_url=image_url,
+        image_urls=image_urls,
+        image_analysis=image_analysis_to_save,
     )
     db.add(user_msg)
+    await db.flush()  # ← Flush trước để user_msg có created_at sớm hơn assistant_msg
 
     # --- Assistant message ---
     sources: list[SourceChunk] = state.get("sources", [])
@@ -207,35 +260,73 @@ async def run_medical_graph(
     request: ChatRequest,
     user: User,
     db: AsyncSession,
+    collection_alias: str | None = None,
 ) -> ChatResponse:
     """
     Entry point công khai — gọi từ chat route.
 
     Args:
-        request: ChatRequest từ client (message, session_id, image_base64)
-        user:    User ORM object (đã xác thực JWT)
-        db:      AsyncSession từ FastAPI dependency
+        request:          ChatRequest từ client (message, session_id, image_base64)
+        user:             User ORM object (đã xác thực JWT)
+        db:               AsyncSession từ FastAPI dependency
+        collection_alias: 'clean' | 'raw' | None — chọn collection RAG (A/B test)
 
     Returns:
         ChatResponse với session_id, message_id, content, sources, urgency_level
     """
-    # Chuẩn bị dữ liệu ảnh
-    image_base64: str | None = None
-    image_mime_type: str = "image/jpeg"
+    # Chuẩn bị dữ liệu ảnh — gộp images_base64 (mới) và image_base64 (legacy)
+    raw_images: list[str] = []
+    if request.images_base64:
+        raw_images.extend(request.images_base64)
     if request.image_base64:
-        image_mime_type = _detect_mime_type(request.image_base64)
-        image_base64 = _strip_data_url(request.image_base64)
+        raw_images.append(request.image_base64)
+
+    images_base64: list[str] = []
+    image_mime_types: list[str] = []
+    for raw in raw_images:
+        if not raw:
+            continue
+        images_base64.append(_strip_data_url(raw))
+        image_mime_types.append(_detect_mime_type(raw))
+
+    chat_history = await _load_chat_history(
+        session_id=str(request.session_id) if request.session_id else None,
+        db=db,
+    )
+
+    # Phase 1: nếu turn này không kèm ảnh mới nhưng user đang nhắc tới
+    # ảnh đã gửi trước đó → reuse danh sách ảnh gần nhất trong history.
+    reused_image = False
+    if not images_base64 and _message_references_prior_image(request.message):
+        prior_urls = _find_latest_images_in_history(chat_history)
+        if prior_urls:
+            for url in prior_urls:
+                images_base64.append(_strip_data_url(url))
+                image_mime_types.append(_detect_mime_type(url))
+            reused_image = True
+            logger.info(
+                "[Image-Reuse] User nhắc tới ảnh cũ, reuse %d ảnh gần nhất",
+                len(prior_urls),
+            )
+        else:
+            logger.info(
+                "[Image-Reuse] User nhắc tới ảnh nhưng history không có ảnh nào"
+            )
 
     initial_state: AgentState = {
         "user_id": str(user.id),
         "session_id": str(request.session_id) if request.session_id else None,
         "user_message": request.message,
-        "image_base64": image_base64,
-        "image_mime_type": image_mime_type,
+        "chat_history": chat_history,
+        "images_base64": images_base64,
+        "image_mime_types": image_mime_types,
+        "reused_image_from_history": reused_image,
+        "collection_alias": collection_alias,
         "image_analysis_result": None,
         "retrieved_chunks": [],
         "sources": [],
         "rag_context": "",
+        "insufficient_context": False,
         "response": "",
         "message_id": None,
         "urgency_level": None,
@@ -262,6 +353,7 @@ async def run_medical_graph(
             urgency_level=None,
             created_at=datetime.utcnow(),
         )
+    
 
     return ChatResponse(
         session_id=uuid.UUID(final_state["session_id"]),
@@ -271,3 +363,53 @@ async def run_medical_graph(
         urgency_level=final_state.get("urgency_level"),
         created_at=datetime.utcnow(),
     )
+
+async def _load_chat_history(
+    session_id: str | None,
+    db: AsyncSession,
+    limit: int = 10,
+) -> list[dict]:
+    """Đọc N tin nhắn gần nhất của session để làm context cho AI."""
+    if not session_id:
+        return []
+    try:
+        session_uuid = uuid.UUID(str(session_id))
+    except ValueError:
+        logger.warning("session_id không hợp lệ: %s", session_id)
+        return []
+
+    result = await db.execute(
+        select(ChatMessage)
+        .where(ChatMessage.session_id == session_uuid)
+        .order_by(ChatMessage.created_at.desc())
+        .limit(limit)
+    )
+    messages = list(result.scalars().all())
+    messages.reverse()  # Đảo ngược để có thứ tự thời gian (cũ → mới)
+
+    # Bao gồm image_urls + image_analysis để có thể:
+    # (a) Reuse ảnh cũ khi user follow-up không kèm ảnh mới
+    # (b) Inject analysis cũ vào prompt mà không cần gọi lại Vision API
+    history = [
+        {
+            "role": m.role,
+            "content": m.content,
+            "image_urls": list(m.image_urls or []),
+            "image_analysis": list(m.image_analysis or []) if m.image_analysis else None,
+        }
+        for m in messages
+    ]
+    logger.info(
+        "[Memory] Đã nạp %d tin nhắn cũ từ session %s", len(history), session_id
+    )
+    for idx, item in enumerate(history, start=1):
+        preview = item["content"][:80].replace("\n", " ")
+        n_imgs = len(item.get("image_urls") or [])
+        has_analysis = "Y" if item.get("image_analysis") else "N"
+        logger.info(
+            "[Memory] %d/%d | role=%s | imgs=%d | analysis=%s | preview=%s",
+            idx, len(history), item["role"], n_imgs, has_analysis, preview,
+        )
+    return history
+    
+    

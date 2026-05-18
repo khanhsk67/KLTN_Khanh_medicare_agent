@@ -81,7 +81,16 @@
      margin-top: 0.1rem;
  }
 
- :host ::ng-deep .p-timeline-event-opposite {
-     gap: 0;
-     flex: 1 auto;
+ :host ::ng-deep .timeline-card .p-timeline-event-opposite {
+     display: none;
+ }
+
+ :host ::ng-deep .timeline-card .p-timeline-event-content {
+     padding-left: 0.75rem;
+ }
+
+ @media (max-width: 576px) {
+     :host ::ng-deep .timeline-card .p-timeline-event-content {
+         padding-left: 0.5rem;
+     }
  }

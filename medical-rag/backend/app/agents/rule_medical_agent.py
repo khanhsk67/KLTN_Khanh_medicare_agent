@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Rule Medical Agent — tìm kiếm tài liệu y tế (RAG) và phân tích với Gemini.
+Rule Medical Agent — tìm kiếm tài liệu y tế (RAG) và phân tích với OpenAI.
 """
 import asyncio
 import json
@@ -9,7 +9,7 @@ import re
 import time
 from typing import Any
 
-import google.generativeai as genai
+from openai import OpenAI
 
 from app.core.config import settings
 from app.core.prompts import RULE_MEDICAL_SYSTEM_PROMPT
@@ -18,7 +18,7 @@ from app.services.vector_store import qdrant_service
 
 logger = logging.getLogger(__name__)
 
-genai.configure(api_key=settings.GOOGLE_API_KEY)
+_openai_client = OpenAI(api_key=settings.OPENAI_API_KEY)
 
 
 # ---------------------------------------------------------------------------
@@ -31,12 +31,15 @@ def _get_retry_delay(exc: Exception, default: int = 65) -> int:
     return int(match.group(1)) + 5 if match else default
 
 
-def _call_gemini_text(prompt: str, max_retries: int = 2) -> str:
-    """Gọi Gemini text generation với auto-retry khi gặp 429."""
-    model = genai.GenerativeModel(settings.LLM_MODEL)
+def _call_openai_text(prompt: str, max_retries: int = 2) -> str:
+    """Gọi OpenAI chat completion với auto-retry khi gặp 429."""
     for attempt in range(max_retries + 1):
         try:
-            return model.generate_content(prompt).text
+            response = _openai_client.chat.completions.create(
+                model=settings.LLM_MODEL,
+                messages=[{"role": "user", "content": prompt}],
+            )
+            return response.choices[0].message.content
         except Exception as exc:
             if "429" in str(exc) and attempt < max_retries:
                 delay = _get_retry_delay(exc)
@@ -54,27 +57,108 @@ def _extract_json(text: str) -> dict[str, Any]:
     return json.loads(cleaned)
 
 
-def _build_search_query(state: AgentState) -> str:
-    """Kết hợp message + image findings thành query cho Qdrant."""
-    parts: list[str] = []
+def _norm_item(s: str) -> str:
+    """Chuẩn hoá 1 finding/condition/body_part: lowercase + strip + collapse spaces."""
+    return re.sub(r"\s+", " ", (s or "").strip().lower())
 
+
+def _build_search_queries(state: AgentState) -> list[str]:
+    """
+    Build danh sách query cho Qdrant — 1 query / ảnh khi có multi-image,
+    fallback về 1 query duy nhất (user_message) khi không có ảnh.
+
+    Mỗi query / ảnh = user_message + findings/conditions/body_parts CỦA RIÊNG ảnh đó.
+    Findings/conditions/body_parts được SORT CANONICAL (sau khi normalize) để
+    2 ảnh cùng nội dung khác thứ tự cũng sinh ra cùng 1 query → dedupe được.
+    """
     user_msg = state.get("user_message", "").strip()
-    if user_msg:
-        parts.append(user_msg)
 
     image_result = state.get("image_analysis_result")
-    if image_result and isinstance(image_result, dict):
-        findings = image_result.get("findings", [])
-        conditions = image_result.get("suspected_conditions", [])
-        body_parts = image_result.get("affected_body_parts", [])
-        if findings:
-            parts.append("Phát hiện: " + ", ".join(findings[:3]))
-        if conditions:
-            parts.append("Nghi ngờ: " + ", ".join(conditions[:2]))
-        if body_parts:
-            parts.append("Vị trí: " + ", ".join(body_parts[:2]))
+    results_list: list[dict] = []
+    if isinstance(image_result, list):
+        results_list = [r for r in image_result if isinstance(r, dict)]
+    elif isinstance(image_result, dict):
+        results_list = [image_result]
 
-    return " | ".join(parts) if parts else user_msg
+    # Không có ảnh → chỉ dùng user_message
+    if not results_list:
+        return [user_msg] if user_msg else []
+
+    queries: list[str] = []
+    for r in results_list:
+        parts: list[str] = []
+        if user_msg:
+            parts.append(user_msg)
+        # Canonical form: dedupe + sort để 2 ảnh giống nhau (kể cả khác thứ tự findings)
+        # ra cùng 1 query string → dedupe bằng text-level so sánh sau đây.
+        findings = sorted(set(_norm_item(f) for f in (r.get("findings") or []) if f))[:3]
+        conditions = sorted(set(_norm_item(c) for c in (r.get("suspected_conditions") or []) if c))[:2]
+        body_parts = sorted(set(_norm_item(b) for b in (r.get("affected_body_parts") or []) if b))[:2]
+        if findings:
+            parts.append("Phát hiện: " + ", ".join(findings))
+        if conditions:
+            parts.append("Nghi ngờ: " + ", ".join(conditions))
+        if body_parts:
+            parts.append("Vị trí: " + ", ".join(body_parts))
+        q = " | ".join(parts) if parts else user_msg
+        if q:
+            queries.append(q)
+
+    return queries or ([user_msg] if user_msg else [])
+
+
+def _dedupe_queries(queries: list[str]) -> list[str]:
+    """Dedupe theo string exact (sau khi đã canonical hoá ở _build_search_queries)."""
+    seen: set[str] = set()
+    out: list[str] = []
+    for q in queries:
+        if q in seen:
+            continue
+        seen.add(q)
+        out.append(q)
+    return out
+
+
+def _chunk_fingerprint(chunk: SourceChunk) -> str:
+    """Định danh chunk để dedupe — ưu tiên chunk_id, fallback file+page+content prefix."""
+    if chunk.chunk_id:
+        return chunk.chunk_id
+    return f"{chunk.source_file}#{chunk.page_number}#{(chunk.content or '')[:80]}"
+
+
+def _merge_chunks_round_robin(
+    per_query_chunks: list[list[SourceChunk]], target: int
+) -> list[SourceChunk]:
+    """
+    Round-robin merge từ N list chunks (đã sort theo score) → list duy nhất ≤ target.
+
+    Vòng 0: lấy chunk top từ MỖI ảnh (đảm bảo fair coverage).
+    Vòng 1: lấy chunk thứ 2 từ mỗi ảnh.
+    ... Dừng khi đủ target hoặc cạn chunks.
+
+    Dedupe theo fingerprint — chunk trùng (xuất hiện trong nhiều query) chỉ giữ 1 lần,
+    nhường slot cho chunk khác.
+    """
+    seen: set[str] = set()
+    result: list[SourceChunk] = []
+
+    # Số vòng tối đa = chiều dài list dài nhất
+    max_rounds = max((len(lst) for lst in per_query_chunks), default=0)
+
+    for round_idx in range(max_rounds):
+        for img_chunks in per_query_chunks:
+            if round_idx >= len(img_chunks):
+                continue
+            chunk = img_chunks[round_idx]
+            fp = _chunk_fingerprint(chunk)
+            if fp in seen:
+                continue
+            seen.add(fp)
+            result.append(chunk)
+            if len(result) >= target:
+                return result
+
+    return result
 
 
 def _format_chunks_for_prompt(chunks: list[SourceChunk]) -> str:
@@ -104,9 +188,10 @@ def _log_retrieved_chunks(query: str, chunks: list[SourceChunk]) -> None:
     for index, chunk in enumerate(chunks, 1):
         preview = " ".join(chunk.content.split())[:300]
         logger.info(
-            "[RAG] Chunk %d/%d | score=%s | file=%s | page=%s | preview=%s",
+            "[RAG] Chunk %d/%d | id=%s | score=%s | file=%s | page=%s | preview=%s",
             index,
             len(chunks),
+            chunk.chunk_id,
             chunk.relevance_score,
             chunk.source_file,
             chunk.page_number,
@@ -120,39 +205,127 @@ def _log_retrieved_chunks(query: str, chunks: list[SourceChunk]) -> None:
 
 async def retrieve_medical_rules(state: AgentState) -> AgentState:
     """
-    LangGraph node: RAG search + Gemini analysis.
+    LangGraph node: RAG search + OpenAI analysis.
 
-    1. Build query từ message + image analysis
-    2. Search Qdrant top-5 chunks
-    3. Gọi Gemini với chunks + RULE_MEDICAL_SYSTEM_PROMPT
-    4. Parse JSON → set state["rag_context"], ["treatment_data"], ["urgency_level"]
+    Multi-image strategy:
+    1. Build N query (1 / ảnh) hoặc 1 query (text-only)
+    2. Search Qdrant song song với top_k cao hơn / query (3 mỗi query)
+    3. Merge round-robin + dedupe → giữ top-5 cuối (fair coverage mỗi ảnh)
+    4. Gọi OpenAI với chunks + RULE_MEDICAL_SYSTEM_PROMPT
+    5. Parse JSON → set state["rag_context"], ["treatment_data"], ["urgency_level"]
     """
-    query = _build_search_query(state)
-    logger.info("RAG query: %s", query[:100])
+    raw_queries = _build_search_queries(state)
+    if not raw_queries:
+        logger.warning("[RAG] Không có query nào để search — skip RAG")
+        state["retrieved_chunks"] = []
+        state["sources"] = []
+        state["insufficient_context"] = True
+        state["rag_context"] = ""
+        state["treatment_data"] = None
+        state["urgency_level"] = None
+        return state
 
-    # Tìm kiếm tài liệu y tế
+    # Dedupe: 2+ ảnh cùng triệu chứng → 1 query duy nhất (tiết kiệm Qdrant call)
+    queries = _dedupe_queries(raw_queries)
+    n_dedupes = len(raw_queries) - len(queries)
+    if n_dedupes > 0:
+        logger.info(
+            "[RAG] Dedupe queries: %d query trùng đã gộp (%d raw → %d unique)",
+            n_dedupes, len(raw_queries), len(queries),
+        )
+
+    # Top-K động theo N query unique:
+    # - 1 query → 5 chunks (giữ như cũ)
+    # - 2+ query → min(10, 4 + N) — mỗi ảnh có thêm chỗ, cap 10 để không quá tải LLM
+    n_unique = len(queries)
+    final_target = 5 if n_unique == 1 else min(10, 4 + n_unique)
+    # Mỗi query lấy nhiều hơn để có dư cho dedupe + round-robin
+    per_query_top_k = max(3, final_target // n_unique + 1)
+
+    logger.info(
+        "[RAG] Built %d query unique (multi-image=%s) | per_query_top_k=%d | final_target=%d",
+        n_unique, n_unique > 1, per_query_top_k, final_target,
+    )
+    for i, q in enumerate(queries, start=1):
+        logger.info("[RAG] Query #%d: %s", i, q[:150])
+
+    # Resolve collection alias từ state (nếu có) → tên collection thật
+    alias = state.get("collection_alias")
     try:
-        logger.info("[RAG] Starting vector search with top_k=5")
-        chunks = await qdrant_service.search(query, top_k=5)
-    except Exception as exc:
-        logger.error("Qdrant search lỗi: %s", exc)
-        chunks = []
+        collection_name = settings.resolve_collection(alias)
+    except ValueError as exc:
+        logger.error("Collection alias lỗi: %s — fallback về default", exc)
+        collection_name = None  # fallback về default
 
-    _log_retrieved_chunks(query, chunks)
+    # Tìm kiếm tài liệu y tế — song song N query
+    try:
+        logger.info(
+            "[RAG] Starting %d parallel vector searches | alias=%s | collection=%s",
+            len(queries), alias, collection_name or "default",
+        )
+        search_results = await asyncio.gather(
+            *[
+                qdrant_service.search(
+                    q, top_k=per_query_top_k, collection_name=collection_name,
+                )
+                for q in queries
+            ],
+            return_exceptions=True,
+        )
+    except Exception as exc:
+        logger.error("Qdrant parallel search lỗi: %s", exc)
+        search_results = []
+
+    # Lọc exception, log per-query
+    per_query_chunks: list[list[SourceChunk]] = []
+    for i, r in enumerate(search_results, start=1):
+        if isinstance(r, Exception):
+            logger.warning("[RAG] Query #%d lỗi: %s — skip", i, r)
+            per_query_chunks.append([])
+        elif isinstance(r, list):
+            logger.info("[RAG] Query #%d → %d chunks raw", i, len(r))
+            per_query_chunks.append(r)
+        else:
+            per_query_chunks.append([])
+
+    # Round-robin merge + dedupe → top-5
+    chunks = _merge_chunks_round_robin(per_query_chunks, final_target)
+
+    # Log retrieved chunks final
+    _log_retrieved_chunks(" || ".join(queries)[:300], chunks)
 
     state["retrieved_chunks"] = chunks
     state["sources"] = chunks
 
+    # Không có chunk nào vượt threshold → đánh dấu để chatbot agent trả fallback,
+    # và skip luôn phần phân tích Gemini (không có context thì phân tích chỉ tốn quota).
+    if not chunks:
+        logger.warning(
+            "[RAG] Không có chunk nào đạt score_threshold — set insufficient_context=True"
+        )
+        state["insufficient_context"] = True
+        state["rag_context"] = ""
+        state["treatment_data"] = None
+        state["urgency_level"] = None
+        return state
+
+    state["insufficient_context"] = False
+
     # Format chunks thành context text
     chunks_text = _format_chunks_for_prompt(chunks)
 
-    # Build image analysis section
+    # Build image analysis section (hỗ trợ list nhiều ảnh)
     image_section = ""
     image_result = state.get("image_analysis_result")
-    if image_result and isinstance(image_result, dict):
+    results_list: list[dict] = []
+    if isinstance(image_result, list):
+        results_list = [r for r in image_result if isinstance(r, dict)]
+    elif isinstance(image_result, dict):
+        results_list = [image_result]
+    if results_list:
         image_section = (
-            "\n\n## Kết quả phân tích hình ảnh y tế:\n"
-            + json.dumps(image_result, ensure_ascii=False, indent=2)
+            "\n\n## Kết quả phân tích hình ảnh y tế ({} ảnh):\n".format(len(results_list))
+            + json.dumps(results_list, ensure_ascii=False, indent=2)
         )
 
     full_prompt = (
@@ -165,7 +338,7 @@ async def retrieve_medical_rules(state: AgentState) -> AgentState:
 
     loop = asyncio.get_running_loop()
     try:
-        raw_text = await loop.run_in_executor(None, _call_gemini_text, full_prompt)
+        raw_text = await loop.run_in_executor(None, _call_openai_text, full_prompt)
         result = _extract_json(raw_text)
 
         diagnosis = result.get("diagnosis", {})

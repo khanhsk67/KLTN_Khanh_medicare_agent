@@ -26,7 +26,7 @@ if "asyncpg" not in sys.modules:
 os.environ.setdefault(
     "POSTGRES_URL", "postgresql+asyncpg://test:test@localhost/testdb"
 )
-os.environ.setdefault("GOOGLE_API_KEY", "test-api-key-not-real")
+os.environ.setdefault("OPENAI_API_KEY", "test-api-key-not-real")
 os.environ.setdefault(
     "JWT_SECRET_KEY", "test-jwt-secret-key-for-testing-only-minimum-32-chars!"
 )
@@ -175,18 +175,24 @@ async def client(test_db):
 
 
 @pytest.fixture
-def mock_gemini():
-    """Mock google.generativeai.GenerativeModel để không gọi API thật."""
-    with patch("google.generativeai.GenerativeModel") as mock_model:
+def mock_openai():
+    """Mock openai.OpenAI client để không gọi API thật."""
+    fake_message = MagicMock(content="Đây là phản hồi mock từ OpenAI.")
+    fake_choice = MagicMock(
+        message=fake_message,
+        delta=MagicMock(content="Đây là phản hồi mock từ OpenAI."),
+    )
+    fake_usage = MagicMock(prompt_tokens=10, completion_tokens=20)
+    fake_response = MagicMock(choices=[fake_choice], usage=fake_usage)
+
+    with patch("openai.OpenAI") as mock_cls:
         instance = MagicMock()
-        instance.generate_content_async = AsyncMock(
-            return_value=MagicMock(text="Đây là phản hồi mock từ Gemini.")
-        )
-        instance.generate_content = MagicMock(
-            return_value=MagicMock(text="Đây là phản hồi mock từ Gemini.")
-        )
-        mock_model.return_value = instance
-        yield mock_model
+        instance.chat.completions.create = MagicMock(return_value=fake_response)
+        # Embedding mock
+        fake_embedding = MagicMock(data=[MagicMock(embedding=[0.0] * 768)])
+        instance.embeddings.create = MagicMock(return_value=fake_embedding)
+        mock_cls.return_value = instance
+        yield mock_cls
 
 
 @pytest.fixture
