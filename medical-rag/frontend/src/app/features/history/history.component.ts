@@ -3,11 +3,6 @@ import { Router } from '@angular/router';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged } from 'rxjs/operators';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { DataViewModule } from 'primeng/dataview';
-import { InputTextModule } from 'primeng/inputtext';
-import { IconFieldModule } from 'primeng/iconfield';
-import { InputIconModule } from 'primeng/inputicon';
-import { ButtonModule } from 'primeng/button';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ConfirmDialogModule } from 'primeng/confirmdialog';
 import { ToastModule } from 'primeng/toast';
@@ -21,12 +16,12 @@ import { SessionCardComponent } from './components/session-card/session-card.com
   selector: 'app-history',
   standalone: true,
   imports: [
-    DataViewModule, InputTextModule, IconFieldModule, InputIconModule,
-    ButtonModule, SkeletonModule, ConfirmDialogModule, ToastModule,
+    SkeletonModule, ConfirmDialogModule, ToastModule,
     PaginatorModule, SessionCardComponent
   ],
   providers: [ConfirmationService, MessageService],
-  templateUrl: './history.component.html'
+  templateUrl: './history.component.html',
+  styleUrl: './history.component.scss'
 })
 export class HistoryComponent implements OnInit {
   private readonly api = inject(ApiService);

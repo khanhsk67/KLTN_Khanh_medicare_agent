@@ -1,5 +1,88 @@
+@use '../../../../styles/colors' as c;
+
+:host { display: block; }
+
 .emergency-banner {
-  background: #c62828;
-  color: #fff;
+  background: linear-gradient(135deg, c.$red-600 0%, c.$red-700 100%);
+  color: c.$white;
+  padding: 0.85rem 1.25rem;
   border-radius: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  box-shadow: 0 6px 20px rgba(c.$red-500, 0.4);
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid rgba(c.$white, 0.18);
+
+  // Subtle pulsing glow overlay
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at 20% 50%, rgba(c.$white, 0.18) 0%, transparent 50%);
+    pointer-events: none;
+    animation: emergPulse 3s ease-in-out infinite;
+  }
+  > * { position: relative; z-index: 1; }
+}
+
+@keyframes emergPulse {
+  0%, 100% { opacity: 0.7; }
+  50% { opacity: 1; }
+}
+
+.emerg-content {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+
+  .emerg-icon {
+    font-size: 1.6rem;
+    flex-shrink: 0;
+    filter: drop-shadow(0 0 8px rgba(c.$white, 0.5));
+    animation: emergIcon 2s ease-in-out infinite;
+  }
+
+  .emerg-text {
+    .emerg-title { font-weight: 800; font-size: 0.95rem; letter-spacing: 0.01em; }
+    .emerg-hotline {
+      font-size: 0.85rem;
+      opacity: 0.92;
+      strong {
+        font-size: 1.1rem;
+        font-weight: 800;
+        background: rgba(c.$white, 0.2);
+        padding: 0.05rem 0.55rem;
+        border-radius: 6px;
+        margin-left: 0.25rem;
+      }
+    }
+  }
+}
+
+@keyframes emergIcon {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.15); }
+}
+
+.emerg-dismiss {
+  width: 2.2rem; height: 2.2rem;
+  border: 1px solid rgba(c.$white, 0.35);
+  border-radius: 50%;
+  background: rgba(c.$white, 0.15);
+  color: c.$white;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+  font-family: inherit;
+
+  &:hover {
+    background: rgba(c.$white, 0.28);
+    transform: rotate(90deg) scale(1.05);
+  }
 }

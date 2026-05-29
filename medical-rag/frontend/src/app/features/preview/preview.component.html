@@ -1,0 +1,379 @@
+<div class="preview-root">
+
+  <!-- ===== PREVIEW SHELL ===== -->
+  <header class="preview-shell">
+    <div class="preview-brand"><i class="pi pi-heart-fill"></i> MediCare AI — Design Preview</div>
+    <nav class="preview-tabs">
+      @for (tab of tabs; track tab.id) {
+        <button type="button" class="preview-tab" [class.active]="activeTab() === tab.id" (click)="setTab(tab.id)">
+          {{ tab.label }}
+        </button>
+      }
+    </nav>
+    <span class="preview-spacer"></span>
+    <button type="button" class="theme-toggle" (click)="toggleTheme()" [title]="themeMode() === 'dark' ? 'Light mode' : 'Dark mode'">
+      <i class="pi" [class.pi-sun]="themeMode() === 'dark'" [class.pi-moon]="themeMode() === 'light'"></i>
+    </button>
+  </header>
+
+  <div class="demo-frame">
+
+    <!-- ====== NAVBAR ====== -->
+    @if (activeTab() === 'navbar') {
+      <section class="demo-section">
+        <div class="demo-label">Page · Navbar (global, dùng cho mọi trang)</div>
+        <h2 class="demo-title">Navbar glassmorphic adaptive</h2>
+        <p class="demo-note">Sticky top, backdrop-blur 14px. Active route có gạch chân sky-500 + glow. Wallet chip sky-amber, theme toggle hình tròn glass, avatar gradient sky. Hover navlink hiện nhẹ sky-glow.</p>
+
+        <div class="demo-navbar">
+          <div class="brand"><i class="pi pi-heart-fill"></i> MediCare AI</div>
+          <div class="nav-links">
+            <a class="nav-link"><i class="pi pi-comments"></i> Chat</a>
+            <a class="nav-link active"><i class="pi pi-chart-line"></i> Phân tích</a>
+            <a class="nav-link"><i class="pi pi-history"></i> Lịch sử</a>
+          </div>
+          <div class="right">
+            <div class="wallet-chip"><i class="pi pi-star-fill"></i> 1,250 điểm</div>
+            <button class="nav-toggle"><i class="pi pi-bell"></i></button>
+            <button class="nav-toggle"><i class="pi pi-moon"></i></button>
+            <div class="avatar">QK</div>
+          </div>
+        </div>
+
+        <div class="spacer-md"></div>
+
+        <div class="demo-navbar">
+          <div class="brand"><i class="pi pi-heart-fill"></i> MediCare AI</div>
+          <div class="nav-links">
+            <a class="nav-link active"><i class="pi pi-comments"></i> Chat</a>
+            <a class="nav-link"><i class="pi pi-chart-line"></i> Phân tích</a>
+            <a class="nav-link"><i class="pi pi-history"></i> Lịch sử</a>
+          </div>
+          <div class="right">
+            <div class="wallet-chip"><i class="pi pi-star-fill"></i> 1,250 điểm</div>
+            <button class="nav-toggle"><i class="pi pi-bell"></i></button>
+            <button class="nav-toggle"><i class="pi pi-moon"></i></button>
+            <div class="avatar">QK</div>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- ====== AUTH ====== -->
+    @if (activeTab() === 'auth') {
+      <section class="demo-section">
+        <div class="demo-label">Page · /auth/login + /auth/register</div>
+        <h2 class="demo-title">Auth — Split layout: hero gradient + glass form</h2>
+
+        <div class="auth-shell">
+          <div class="auth-hero">
+            <span class="badge">Premium Healthcare</span>
+            <h1>Bác sĩ AI<br/>đồng hành cùng bạn 24/7</h1>
+            <p>Hỏi đáp triệu chứng, theo dõi xu hướng sức khoẻ, nhận tư vấn y khoa cá nhân hoá bất cứ lúc nào.</p>
+            <div class="feature-list">
+              <div class="item"><i class="pi pi-check"></i> Phân tích triệu chứng theo thời gian thực</div>
+              <div class="item"><i class="pi pi-check"></i> Lịch sử tư vấn được lưu trữ an toàn</div>
+              <div class="item"><i class="pi pi-check"></i> Cảnh báo nguy cơ dịch bệnh theo thời tiết</div>
+            </div>
+          </div>
+
+          <div class="auth-form">
+            <h2>Đăng nhập</h2>
+            <p class="subtitle">Chào mừng bạn quay lại</p>
+
+            <div class="input-group">
+              <label>Email</label>
+              <div class="input-field">
+                <i class="pi pi-envelope"></i>
+                <input type="email" placeholder="quockhanh@example.com" value="quockhanh050904@gmail.com"/>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label>Mật khẩu</label>
+              <div class="input-field">
+                <i class="pi pi-lock"></i>
+                <input type="password" placeholder="••••••••" value="password123"/>
+                <i class="pi pi-eye toggle-eye"></i>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="btn btn-primary btn-block"><i class="pi pi-sign-in"></i> Đăng nhập</button>
+              <div class="switch">Chưa có tài khoản? <a href="javascript:void(0)">Đăng ký ngay</a></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- ====== CHAT ====== -->
+    @if (activeTab() === 'chat') {
+      <section class="demo-section">
+        <div class="demo-label">Page · /chat</div>
+        <h2 class="demo-title">Chat — Sidebar glass + Sky bubble user / Glass bubble AI</h2>
+
+        <div class="chat-shell">
+          <aside class="chat-sidebar">
+            <button class="new-btn"><i class="pi pi-plus"></i> Tư vấn mới</button>
+            <div class="section-title">Gần đây</div>
+            <div class="session-item active">Đau bụng dữ dội
+              <div class="meta">2 giờ trước · 12 tin nhắn</div>
+            </div>
+            <div class="session-item">Sốt nhẹ kéo dài
+              <div class="meta">Hôm qua · 8 tin nhắn</div>
+            </div>
+            <div class="session-item">Mụn viêm đỏ
+              <div class="meta">3 ngày trước · 5 tin nhắn</div>
+            </div>
+            <div class="section-title">Tuần trước</div>
+            <div class="session-item">Đau đầu mất ngủ
+              <div class="meta">6 ngày trước</div>
+            </div>
+          </aside>
+
+          <main class="chat-main">
+            <div class="chat-header">
+              <div>
+                <div class="title">🩺 Đau bụng dữ dội</div>
+                <div class="specialty">Chuyên khoa: Tiêu hoá · Mức độ: Nghiêm trọng</div>
+              </div>
+              <div class="header-actions">
+                <button class="icon-btn"><i class="pi pi-download"></i></button>
+                <button class="icon-btn"><i class="pi pi-ellipsis-v"></i></button>
+              </div>
+            </div>
+
+            <div class="chat-messages">
+              <div class="bubble user">Chào bác sĩ, em bị đau bụng dữ dội từ sáng đến giờ, đau quặn từng cơn ở vùng bụng dưới bên phải. Có nguy hiểm không ạ?</div>
+              <div class="bubble ai">
+                Triệu chứng bạn mô tả (đau quặn vùng bụng dưới bên phải) có thể liên quan đến một số nguyên nhân:
+                <ul>
+                  <li><strong>Viêm ruột thừa</strong> — cần đi cấp cứu ngay nếu kèm sốt, nôn</li>
+                  <li><strong>Co thắt ruột / hội chứng ruột kích thích</strong></li>
+                  <li><strong>Sỏi tiết niệu</strong> — đau lan xuống bẹn</li>
+                </ul>
+                Khuyến nghị: đi khám trong vòng 24h, không tự ý dùng giảm đau mạnh.
+                <div class="sources"><i class="pi pi-book"></i> Xem 3 nguồn tham khảo y khoa</div>
+              </div>
+              <div class="bubble user">Em cũng hơi sốt nhẹ và buồn nôn. Có phải đi cấp cứu không?</div>
+              <div class="bubble ai">
+                Có. Triệu chứng <strong>đau bụng dưới bên phải + sốt + buồn nôn</strong> là dấu hiệu điển hình của <strong>viêm ruột thừa cấp</strong>. Đây là tình trạng <strong>khẩn cấp y khoa</strong> — cần đến bệnh viện <strong>ngay lập tức</strong>.
+                <div class="sources alert"><i class="pi pi-exclamation-triangle"></i> Cảnh báo nghiêm trọng · 5 nguồn</div>
+              </div>
+            </div>
+
+            <div class="chat-input-bar">
+              <button class="icon-btn"><i class="pi pi-image"></i></button>
+              <div class="input-wrap">
+                <input placeholder="Nhập câu hỏi của bạn..." />
+                <i class="pi pi-microphone hint-icon"></i>
+              </div>
+              <button class="send-btn"><i class="pi pi-send"></i></button>
+            </div>
+          </main>
+        </div>
+      </section>
+    }
+
+    <!-- ====== WALLET ====== -->
+    @if (activeTab() === 'wallet') {
+      <section class="demo-section">
+        <div class="demo-label">Page · /wallet — Ví điểm</div>
+        <h2 class="demo-title">Wallet — Balance hero điểm + Stats + Mã đổi điểm + Lịch sử nạp</h2>
+
+        <div class="wallet-grid">
+          <div class="wallet-balance">
+            <div>
+              <div class="label">Số dư hiện tại</div>
+              <div class="amount-row"><span class="amount">1,250</span><span class="currency">điểm</span></div>
+            </div>
+            <button class="checkin-btn"><i class="pi pi-star-fill"></i> Điểm danh nhận 50 điểm</button>
+          </div>
+
+          <div class="stats-row">
+            <div class="stat-card">
+              <div>
+                <div class="stat-value">2,450</div>
+                <div class="stat-label">Tổng điểm đã nhận</div>
+              </div>
+              <div class="icon-circle sky"><i class="pi pi-arrow-down"></i></div>
+            </div>
+            <div class="stat-card">
+              <div>
+                <div class="stat-value">15</div>
+                <div class="stat-label">Lượt điểm danh</div>
+              </div>
+              <div class="icon-circle amber"><i class="pi pi-calendar-plus"></i></div>
+            </div>
+            <div class="stat-card">
+              <div>
+                <div class="stat-value">3</div>
+                <div class="stat-label">Mã đã đổi</div>
+              </div>
+              <div class="icon-circle emerald"><i class="pi pi-gift"></i></div>
+            </div>
+          </div>
+
+          <div class="promo-card">
+            <h3><i class="pi pi-ticket"></i> Nhập mã điểm</h3>
+            <p class="promo-hint">Nhập mã điểm để nhận điểm thưởng. Thử mã <strong>THESIS2026</strong> để nhận 200 điểm!</p>
+            <div class="promo-row">
+              <div class="input-field flex-1">
+                <i class="pi pi-tag"></i>
+                <input placeholder="Nhập mã điểm (VD: THESIS2026)" style="text-transform: uppercase;"/>
+              </div>
+              <button class="btn btn-primary"><i class="pi pi-gift"></i> Đổi mã</button>
+            </div>
+            <div class="promo-suggestions">
+              <span class="promo-suggest-label">Mã demo:</span>
+              <span class="promo-chip"><i class="pi pi-bolt"></i> THESIS2026</span>
+              <span class="promo-chip"><i class="pi pi-bolt"></i> WELCOME100</span>
+              <span class="promo-chip"><i class="pi pi-bolt"></i> TESTDEMO</span>
+            </div>
+          </div>
+
+          <div class="tx-list">
+            <h3>Lịch sử nạp điểm</h3>
+
+            <div class="tx-item">
+              <div class="tx-marker in"></div>
+              <div class="tx-info">
+                <div class="tx-title">Điểm danh hằng ngày</div>
+                <div class="tx-meta">Hôm nay · 09:12</div>
+              </div>
+              <span class="source-tag checkin">Điểm danh</span>
+              <div class="tx-amount in">+50 <span class="unit">điểm</span></div>
+            </div>
+
+            <div class="tx-item">
+              <div class="tx-marker in"></div>
+              <div class="tx-info">
+                <div class="tx-title">Mã THESIS2026</div>
+                <div class="tx-meta">Hôm qua · 14:32</div>
+              </div>
+              <span class="source-tag promo">Mã điểm</span>
+              <div class="tx-amount in">+200 <span class="unit">điểm</span></div>
+            </div>
+
+            <div class="tx-item">
+              <div class="tx-marker in"></div>
+              <div class="tx-info">
+                <div class="tx-title">Điểm danh hằng ngày</div>
+                <div class="tx-meta">Hôm qua · 08:45</div>
+              </div>
+              <span class="source-tag checkin">Điểm danh</span>
+              <div class="tx-amount in">+50 <span class="unit">điểm</span></div>
+            </div>
+
+            <div class="tx-item">
+              <div class="tx-marker in"></div>
+              <div class="tx-info">
+                <div class="tx-title">Mã WELCOME100</div>
+                <div class="tx-meta">3 ngày trước · 16:45</div>
+              </div>
+              <span class="source-tag promo">Mã điểm</span>
+              <div class="tx-amount in">+100 <span class="unit">điểm</span></div>
+            </div>
+
+            <div class="tx-item">
+              <div class="tx-marker in"></div>
+              <div class="tx-info">
+                <div class="tx-title">Điểm danh hằng ngày</div>
+                <div class="tx-meta">3 ngày trước · 08:30</div>
+              </div>
+              <span class="source-tag checkin">Điểm danh</span>
+              <div class="tx-amount in">+50 <span class="unit">điểm</span></div>
+            </div>
+          </div>
+        </div>
+      </section>
+    }
+
+    <!-- ====== HISTORY ====== -->
+    @if (activeTab() === 'history') {
+      <section class="demo-section">
+        <div class="demo-label">Page · /history</div>
+        <h2 class="demo-title">History — Mini hero + Session cards với border-left severity</h2>
+
+        <div class="mini-hero">
+          <span class="hero-subtitle">Lịch sử</span>
+          <h1 class="hero-title">Lịch sử tư vấn của bạn</h1>
+          <p class="hero-description">Tổng cộng 28 phiên tư vấn trong 90 ngày qua. Tìm kiếm hoặc lọc theo mức độ nghiêm trọng.</p>
+        </div>
+
+        <div class="spacer-md"></div>
+
+        <div class="history-header">
+          <div class="history-search">
+            <i class="pi pi-search"></i>
+            <input placeholder="Tìm theo triệu chứng, chuyên khoa..."/>
+          </div>
+          <div class="history-counter">Tổng: <strong>28</strong> phiên · <a href="javascript:void(0)" class="refresh-link"><i class="pi pi-refresh"></i> Làm mới</a></div>
+        </div>
+
+        <div class="spacer-sm"></div>
+
+        <div class="session-list">
+          <div class="session-card severe">
+            <div class="session-icon"><i class="pi pi-exclamation-triangle"></i></div>
+            <div class="session-body">
+              <div class="session-title">Đau bụng dữ dội <span class="tag severe">Nghiêm trọng</span></div>
+              <div class="session-meta">
+                <span><i class="pi pi-clock"></i> 2 giờ trước</span>
+                <span><i class="pi pi-comments"></i> 12 tin nhắn</span>
+                <span><i class="pi pi-building"></i> Tiêu hoá</span>
+              </div>
+              <div class="session-snippet">"Triệu chứng có thể liên quan đến viêm ruột thừa, cần đi khám trong vòng 24h..."</div>
+            </div>
+            <div class="session-actions">
+              <button class="btn btn-ghost"><i class="pi pi-arrow-right"></i></button>
+            </div>
+          </div>
+
+          <div class="session-card moderate">
+            <div class="session-icon"><i class="pi pi-sun"></i></div>
+            <div class="session-body">
+              <div class="session-title">Sốt nhẹ kéo dài 3 ngày <span class="tag moderate">Trung bình</span></div>
+              <div class="session-meta">
+                <span><i class="pi pi-clock"></i> Hôm qua</span>
+                <span><i class="pi pi-comments"></i> 8 tin nhắn</span>
+                <span><i class="pi pi-building"></i> Nội tổng quát</span>
+              </div>
+              <div class="session-snippet">"Sốt kéo dài có thể do nhiễm virus, nên uống đủ nước và theo dõi nhiệt độ..."</div>
+            </div>
+            <div class="session-actions">
+              <button class="btn btn-ghost"><i class="pi pi-arrow-right"></i></button>
+            </div>
+          </div>
+
+          <div class="session-card mild">
+            <div class="session-icon"><i class="pi pi-heart"></i></div>
+            <div class="session-body">
+              <div class="session-title">Mụn viêm đỏ vùng má <span class="tag mild">Nhẹ</span></div>
+              <div class="session-meta">
+                <span><i class="pi pi-clock"></i> 3 ngày trước</span>
+                <span><i class="pi pi-comments"></i> 5 tin nhắn</span>
+                <span><i class="pi pi-building"></i> Da liễu</span>
+              </div>
+              <div class="session-snippet">"Mụn viêm có thể do thay đổi nội tiết tố hoặc dị ứng mỹ phẩm..."</div>
+            </div>
+            <div class="session-actions">
+              <button class="btn btn-ghost"><i class="pi pi-arrow-right"></i></button>
+            </div>
+          </div>
+        </div>
+
+        <div class="pagination">
+          <button><i class="pi pi-angle-left"></i></button>
+          <button class="active">1</button>
+          <button>2</button>
+          <button>3</button>
+          <button>4</button>
+          <button><i class="pi pi-angle-right"></i></button>
+        </div>
+      </section>
+    }
+
+  </div>
+</div>

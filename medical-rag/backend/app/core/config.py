@@ -54,6 +54,21 @@ class Settings(BaseSettings):
     OPENAI_OUTPUT_PRICE_USD: float = 0.60   # per 1M tokens (placeholder)
     USD_TO_VND_RATE: int = 25000
 
+    # ── Payment / Topup ────────────────────────────
+    # Đơn hết hạn sau X phút nếu user không thanh toán
+    PAYMENT_ORDER_EXPIRE_MINUTES: int = 15
+    # Số tiền tối thiểu cho custom amount (VND)
+    PAYMENT_MIN_CUSTOM_AMOUNT: int = 10_000
+
+    # ── VNPay (Sandbox) ────────────────────────────
+    # Đăng ký tại https://sandbox.vnpayment.vn/devreg/
+    VNPAY_TMN_CODE: str = ""                   # Mã website của merchant
+    VNPAY_HASH_SECRET: str = ""                # Secret key để hash SHA512
+    VNPAY_PAYMENT_URL: str = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html"
+    VNPAY_API_URL: str = "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction"
+    VNPAY_RETURN_URL: str = "http://localhost:4000/wallet/payment-result"
+    VNPAY_IPN_URL: str = "http://localhost:8000/api/payments/webhook"  # backend webhook
+
     def resolve_collection(self, alias: str | None) -> str:
         """
         Map alias từ API query param → tên collection thật trong Qdrant.

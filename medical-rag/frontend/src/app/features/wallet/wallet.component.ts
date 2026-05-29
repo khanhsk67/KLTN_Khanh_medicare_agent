@@ -1,11 +1,8 @@
-import { Component, inject, signal, OnInit } from '@angular/core';
+import { Component, inject, signal, computed, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
-import { CardModule } from 'primeng/card';
-import { ButtonModule } from 'primeng/button';
 import { InputTextModule } from 'primeng/inputtext';
-import { TagModule } from 'primeng/tag';
-import { DividerModule } from 'primeng/divider';
+import { TooltipModule } from 'primeng/tooltip';
 import { SkeletonModule } from 'primeng/skeleton';
 import { ToastModule } from 'primeng/toast';
 import { MessageModule } from 'primeng/message';
@@ -18,23 +15,52 @@ import { RelativeTimePipe } from '../../shared/pipes/relative-time.pipe';
   selector: 'app-wallet',
   imports: [
     CommonModule, FormsModule,
-    CardModule, ButtonModule, InputTextModule,
-    TagModule, DividerModule, SkeletonModule,
-    ToastModule, MessageModule,
+    InputTextModule, TooltipModule,
+    SkeletonModule, ToastModule, MessageModule,
     RelativeTimePipe,
   ],
   providers: [MessageService],
   templateUrl: './wallet.component.html',
+  styleUrl: './wallet.component.scss',
 })
 export class WalletComponent implements OnInit {
   wallet        = inject(WalletService);
   private toast = inject(MessageService);
+
+  private readonly HISTORY_PAGE_SIZE = 10;
 
   isLoading    = signal(true);
   promoCode    = signal('');
   promoLoading = signal(false);
   promoError   = signal<string | null>(null);
   history      = signal<any[]>([]);
+  historyDisplayCount = signal(this.HISTORY_PAGE_SIZE);
+
+  // Demo promo suggestions
+  readonly suggestedPromos = ['THESIS2026', 'WELCOME100', 'TESTDEMO'];
+
+  // === Derived stats from history ===
+  readonly totalEarned = computed(() =>
+    this.history().reduce((sum, tx) => sum + (tx.points || 0), 0)
+  );
+  readonly checkinCount = computed(() =>
+    this.history().filter(tx => tx.source === 'DAILY_CHECKIN').length
+  );
+  readonly promoCount = computed(() =>
+    this.history().filter(tx => tx.source === 'PROMO_CODE').length
+  );
+
+  // === Pagination (load more pattern) ===
+  readonly displayedHistory = computed(() =>
+    this.history().slice(0, this.historyDisplayCount())
+  );
+  readonly remainingHistory = computed(() =>
+    Math.max(0, this.history().length - this.historyDisplayCount())
+  );
+
+  loadMoreHistory(): void {
+    this.historyDisplayCount.update(c => c + this.HISTORY_PAGE_SIZE);
+  }
 
   ngOnInit() {
     this.wallet.loadBalance();
@@ -44,6 +70,7 @@ export class WalletComponent implements OnInit {
 
   loadHistory() {
     this.isLoading.set(true);
+    this.historyDisplayCount.set(this.HISTORY_PAGE_SIZE);
     this.wallet.getTopupHistory().subscribe({
       next: data => {
         this.history.set(data);
@@ -72,6 +99,8 @@ export class WalletComponent implements OnInit {
       }),
     });
   }
+
+  applySuggested(code: string): void { this.promoCode.set(code); }
 
   redeemCode() {
     if (!this.promoCode().trim()) return;
@@ -107,13 +136,13 @@ export class WalletComponent implements OnInit {
     return map[source] ?? source;
   }
 
-  getSourceSeverity(source: string): 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast' {
-    const map: Record<string, 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast'> = {
-      'DAILY_CHECKIN': 'success',
-      'PROMO_CODE':    'info',
-      'ADMIN_BONUS':   'warn',
-      'PURCHASE':      'contrast',
+  getSourceCssClass(source: string): string {
+    const map: Record<string, string> = {
+      'DAILY_CHECKIN': 'checkin',
+      'PROMO_CODE':    'promo',
+      'ADMIN_BONUS':   'bonus',
+      'PURCHASE':      'purchase',
     };
-    return map[source] ?? 'secondary';
+    return map[source] ?? 'default';
   }
 }

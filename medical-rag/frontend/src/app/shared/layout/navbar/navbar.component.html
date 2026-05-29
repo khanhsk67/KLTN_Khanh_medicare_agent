@@ -1,46 +1,51 @@
-<nav class="navbar surface-card border-bottom-1 surface-border px-4 py-2 flex align-items-center justify-content-between">
-  <a routerLink="/chat" class="flex align-items-center gap-2 no-underline">
-    <i class="pi pi-heart-fill text-primary text-xl"></i>
-    <span class="font-bold text-lg text-900">MediCare AI</span>
+<nav class="navbar">
+
+  <!-- Brand -->
+  <a routerLink="/analysis" class="brand">
+    <i class="pi pi-heart-fill"></i>
+    <span class="brand-name">MediCare AI</span>
   </a>
 
-  <div class="flex align-items-center gap-2">
-    <a
-      routerLink="/chat"
-      routerLinkActive="active-link"
-      class="nav-link"
-    >
+  <!-- Nav links -->
+  <div class="nav-links">
+    <a routerLink="/chat" routerLinkActive="active" class="nav-link">
       <i class="pi pi-comments"></i>
       <span>Tư vấn</span>
     </a>
-    <a
-      routerLink="/analysis"
-      routerLinkActive="active-link"
-      class="nav-link"
-    >
-      <i class="pi pi-home"></i>
-      <span>Trang chủ</span>
+    <a routerLink="/analysis" routerLinkActive="active" class="nav-link">
+      <i class="pi pi-chart-line"></i>
+      <span>Phân tích</span>
     </a>
-    <a
-      routerLink="/history"
-      routerLinkActive="active-link"
-      class="nav-link"
-    >
+    <a routerLink="/history" routerLinkActive="active" class="nav-link">
       <i class="pi pi-history"></i>
       <span>Lịch sử</span>
     </a>
+  </div>
+
+  <!-- Right group -->
+  <div class="nav-right">
 
     @if (authService.isAuthenticated()) {
       <app-wallet-widget/>
     }
 
-    <p-button
-      icon="pi pi-sign-out"
-      label="Đăng xuất"
-      severity="secondary"
-      [text]="true"
-      size="small"
-      (click)="logout()"
-    />
+    <!-- Theme toggle -->
+    <button type="button"
+            class="theme-toggle"
+            (click)="toggleTheme()"
+            [attr.aria-label]="themeMode() === 'dark' ? 'Light mode' : 'Dark mode'"
+            [title]="themeMode() === 'dark' ? 'Light mode' : 'Dark mode'">
+      <i class="pi" [class.pi-sun]="themeMode() === 'dark'" [class.pi-moon]="themeMode() === 'light'"></i>
+    </button>
+
+    <!-- Avatar dropdown -->
+    <button type="button"
+            class="avatar-btn"
+            (click)="userMenu.toggle($event)"
+            [title]="user()?.full_name || user()?.email || 'Tài khoản'">
+      <span class="avatar">{{ userInitials() }}</span>
+    </button>
+
+    <p-menu #userMenu [model]="userMenuItems" [popup]="true" styleClass="navbar-user-menu"/>
   </div>
 </nav>

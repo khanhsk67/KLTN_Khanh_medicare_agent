@@ -1,11 +1,7 @@
 import { Component, inject, signal, OnInit } from '@angular/core';
 import { Router, ActivatedRoute } from '@angular/router';
-import { ButtonModule } from 'primeng/button';
-import { ScrollPanelModule } from 'primeng/scrollpanel';
 import { AvatarModule } from 'primeng/avatar';
-import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { SkeletonModule } from 'primeng/skeleton';
-import { DividerModule } from 'primeng/divider';
 import { MarkdownModule } from 'ngx-markdown';
 import { ApiService } from '../../../../core/services/api.service';
 import { MessageItem, SessionSummary } from '../../../../core/models';
@@ -14,9 +10,7 @@ import { MessageItem, SessionSummary } from '../../../../core/models';
   selector: 'app-session-detail',
   standalone: true,
   imports: [
-    ButtonModule, ScrollPanelModule, AvatarModule,
-    ProgressSpinnerModule, SkeletonModule, DividerModule,
-    MarkdownModule
+    AvatarModule, SkeletonModule, MarkdownModule
   ],
   templateUrl: './session-detail.component.html',
   styleUrl: './session-detail.component.scss'

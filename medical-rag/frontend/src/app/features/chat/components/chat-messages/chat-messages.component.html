@@ -1,81 +1,72 @@
-<div #scrollContainer class="messages-container" style="flex: 1; overflow-y: auto; padding: 1.5rem">
+<div #scrollContainer class="messages-container" style="flex: 1; overflow-y: auto;">
 
   @if (messages.length === 0) {
-    <div class="empty-state" fxLayout="column" fxLayoutAlign="center center" style="min-height: 60vh; gap: 1rem">
+    <div class="empty-state">
       <i class="pi pi-heart-fill text-5xl text-primary"></i>
       <h2 class="m-0">MediCare AI</h2>
-      <p class="text-500 text-center m-0">Mô tả triệu chứng của bạn để nhận tư vấn y tế</p>
+      <p class="text-color-secondary text-center m-0">Mô tả triệu chứng của bạn để nhận tư vấn y tế</p>
     </div>
   }
 
   @for (msg of messages; track msg.id) {
-    <div class="mb-4">
 
-      @if (msg.role === 'user') {
-        <div fxLayout="row" fxLayoutAlign="end start" fxLayoutGap="8px">
-          <div class="user-bubble">
-            @if (msg.image_urls && msg.image_urls.length > 0) {
-              <div class="image-grid mb-2"
-                   [style.display]="'grid'"
-                   [style.gridTemplateColumns]="msg.image_urls.length === 1 ? '1fr' : 'repeat(2, 1fr)'"
-                   [style.gap.px]="6">
-                @for (url of msg.image_urls; track $index) {
-                  <img [src]="url"
-                       [attr.alt]="'uploaded image ' + ($index + 1)"
-                       style="width: 100%; max-height: 200px; border-radius: 0.5rem; object-fit: cover" />
-                }
-              </div>
-            }
-            {{ msg.content }}
-          </div>
-          <p-avatar icon="pi pi-user" shape="circle" />
+    @if (msg.role === 'user') {
+      <div class="message-row from-user">
+        <div class="user-bubble">
+          @if (msg.image_urls && msg.image_urls.length > 0) {
+            <div class="image-grid"
+                 [class.single]="msg.image_urls.length === 1"
+                 [class.multi]="msg.image_urls.length > 1">
+              @for (url of msg.image_urls; track $index) {
+                <img [src]="url" [attr.alt]="'uploaded image ' + ($index + 1)"/>
+              }
+            </div>
+          }
+          {{ msg.content }}
         </div>
-      }
+        <p-avatar icon="pi pi-user" shape="circle"/>
+      </div>
+    }
 
-      @if (msg.role === 'assistant') {
-        <div fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="8px">
-          <p-avatar icon="pi pi-heart" shape="circle"
-                    [style]="{'background': 'var(--p-primary-color)', 'color': '#fff'}" />
-          <div class="assistant-bubble" [class.emergency]="msg.urgency_level === 'emergency'">
-            <markdown [data]="msg.content" />
+    @if (msg.role === 'assistant') {
+      <div class="message-row from-ai">
+        <p-avatar icon="pi pi-heart" shape="circle"/>
+        <div class="assistant-bubble" [class.emergency]="msg.urgency_level === 'emergency'">
+          <markdown [data]="msg.content"/>
 
-            @if (msg.sources && msg.sources.length > 0) {
-              <p-accordion class="mt-2">
-                <p-accordionpanel value="sources">
-                  <p-accordionheader>
-                    <i class="pi pi-book mr-2"></i>
-                    Nguồn tài liệu y tế ({{ msg.sources.length }})
-                  </p-accordionheader>
-                  <p-accordioncontent>
-                    @for (s of msg.sources; track $index) {
-                      <div class="source-item">
-                        <div fxLayout="row" fxLayoutAlign="space-between center" class="mb-1">
-                          <span class="font-semibold text-sm">{{ s.source_file || s.source || 'Tài liệu y tế' }}</span>
-                          <p-tag [value]="getScoreLabel(s)" [severity]="getScoreSeverity(s)" />
-                        </div>
-                        <p class="text-sm text-color-secondary m-0">
-                          {{ s.content | slice:0:150 }}...
-                        </p>
+          @if (msg.sources && msg.sources.length > 0) {
+            <p-accordion>
+              <p-accordionpanel value="sources">
+                <p-accordionheader>
+                  <i class="pi pi-book mr-2"></i>
+                  Nguồn tài liệu y tế ({{ msg.sources.length }})
+                </p-accordionheader>
+                <p-accordioncontent>
+                  @for (s of msg.sources; track $index) {
+                    <div class="source-item">
+                      <div class="source-row">
+                        <span class="source-name">{{ s.source_file || s.source || 'Tài liệu y tế' }}</span>
+                        <p-tag [value]="getScoreLabel(s)" [severity]="getScoreSeverity(s)"/>
                       </div>
-                    }
-                  </p-accordioncontent>
-                </p-accordionpanel>
-              </p-accordion>
-            }
-          </div>
+                      <p class="source-text">{{ s.content | slice:0:150 }}...</p>
+                    </div>
+                  }
+                </p-accordioncontent>
+              </p-accordionpanel>
+            </p-accordion>
+          }
         </div>
-      }
+      </div>
+    }
 
-    </div>
   }
 
   @if (isLoading) {
-    <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" class="mb-4">
-      <p-avatar icon="pi pi-heart" shape="circle"
-                [style]="{'background': 'var(--p-primary-color)', 'color': '#fff'}" />
-      <div class="assistant-bubble" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <p-progressspinner class="w-2rem h-2rem" strokeWidth="4" />
-        <span class="text-color-secondary text-sm">Đang phân tích...</span>
+    <div class="loading-row">
+      <p-avatar icon="pi pi-heart" shape="circle"/>
+      <div class="loading-bubble">
+        <span class="loading-dots"><span></span><span></span><span></span></span>
+        <span>Đang phân tích...</span>
       </div>
     </div>
   }

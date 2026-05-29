@@ -1,17 +1,3 @@
-:host {
-  display: block;
-}
+@use './../auth-shared' as auth;
 
-.page-wrapper {
-  height: 100vh;
-  overflow: hidden;
-}
-
-.bg-image {
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center top;
-  filter: brightness(0.7);
-}
+@include auth.auth-page;

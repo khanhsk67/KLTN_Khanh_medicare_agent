@@ -1,4 +1,5 @@
-import { Component, signal, inject, OnInit, computed, NgZone } from '@angular/core';
+import { Component, signal, inject, OnInit, computed, NgZone, effect } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { ToastModule } from 'primeng/toast';
 import { MessageService } from 'primeng/api';
@@ -26,6 +27,11 @@ import { WalletService } from '../../core/services/wallet.service';
   styleUrl: './chat.component.scss'
 })
 export class ChatComponent implements OnInit {
+  private readonly document = inject(DOCUMENT);
+
+  readonly themeMode = signal<'light' | 'dark'>(
+    (typeof localStorage !== 'undefined' && localStorage.getItem('medicare-theme') === 'dark') ? 'dark' : 'light'
+  );
 
   constructor(
     private router: Router,
@@ -34,8 +40,17 @@ export class ChatComponent implements OnInit {
     private chatService: ChatService,
     private walletService: WalletService,
     private ngZone: NgZone,
+  ) {
+    effect(() => {
+      const mode = this.themeMode();
+      const body = this.document.body;
+      if (mode === 'dark') body.classList.add('dark-mode');
+      else body.classList.remove('dark-mode');
+      try { localStorage.setItem('medicare-theme', mode); } catch {}
+    });
+  }
 
-  ) {}
+  toggleTheme(): void { this.themeMode.update(m => (m === 'light' ? 'dark' : 'light')); }
   // private readonly chatService = inject(ChatService);
   // private readonly messageService = inject(MessageService);
   // private readonly authService = inject(AuthService);

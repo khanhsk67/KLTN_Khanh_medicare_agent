@@ -1,62 +1,68 @@
-<div class="flex flex-column gap-3 p-4">
+<div class="session-detail-page">
 
   <!-- Header -->
-  <div class="flex align-items-center gap-3">
-    <p-button icon="pi pi-arrow-left" [text]="true"
-              (onClick)="router.navigate(['/history'])"/>
-    <h2 class="m-0 text-xl font-bold flex-1">
-      {{ session()?.title || 'Chi tiết tư vấn' }}
-    </h2>
-    <p-button label="Tiếp tục hội thoại"
-              icon="pi pi-comments"
-              size="small"
-              (onClick)="continueChat()"/>
-  </div>
+  <div class="detail-header">
+    <button type="button" class="back-btn"
+            (click)="router.navigate(['/history'])"
+            title="Quay lại lịch sử">
+      <i class="pi pi-arrow-left"></i>
+    </button>
 
-  <p-divider/>
+    <div class="detail-title-block">
+      <span class="title-subtitle">Chi tiết tư vấn</span>
+      <h2 class="detail-title">{{ session()?.title || 'Chi tiết tư vấn' }}</h2>
+      @if (session()?.created_at) {
+        <span class="title-meta">
+          <i class="pi pi-clock"></i> {{ session()?.created_at }}
+        </span>
+      }
+    </div>
+
+    <button type="button" class="continue-btn" (click)="continueChat()">
+      <i class="pi pi-comments"></i>
+      Tiếp tục hội thoại
+    </button>
+  </div>
 
   <!-- Loading -->
   @if (isLoading()) {
-    <div class="flex flex-column gap-3">
+    <div class="detail-skeleton">
       @for (i of [1,2,3]; track i) {
-        <p-skeleton height="4rem" borderRadius="8px"/>
+        <p-skeleton height="5rem" borderRadius="16px"/>
       }
     </div>
   }
 
-  <!-- Messages read-only -->
+  <!-- Messages -->
   @if (!isLoading()) {
-    <p-scrollpanel [style]="{ height: 'calc(100vh - 200px)' }">
-      @if (messages().length === 0) {
-        <div class="flex flex-column align-items-center justify-content-center gap-2 py-8">
-          <i class="pi pi-comments text-color-secondary" style="font-size: 3rem"></i>
-          <p class="text-color-secondary m-0">Không có tin nhắn</p>
-        </div>
-      }
-      <div class="flex flex-column gap-3 p-2">
+    @if (messages().length === 0) {
+      <div class="empty-msg">
+        <i class="pi pi-comments"></i>
+        <p>Không có tin nhắn nào trong phiên này</p>
+      </div>
+    } @else {
+      <div class="messages-container">
         @for (msg of messages(); track msg.id) {
-          <div class="flex gap-2"
-               [class]="msg.role === 'user' ? 'justify-content-end' : 'justify-content-start'">
-            @if (msg.role === 'assistant') {
-              <p-avatar icon="pi pi-heart" shape="circle"
-                        [style]="{'background': 'var(--p-primary-color)', 'color': '#fff'}"/>
-            }
-            <div class="p-3 border-round-lg"
-                 [class]="msg.role === 'user' ? 'bg-primary text-white' : 'surface-100'"
-                 style="max-width: 70%">
-              @if (msg.role === 'assistant') {
-                <markdown [data]="msg.content"/>
-              } @else {
-                <p class="m-0 text-sm line-height-3">{{ msg.content }}</p>
-              }
-            </div>
-            @if (msg.role === 'user') {
+
+          @if (msg.role === 'user') {
+            <div class="message-row from-user">
+              <div class="user-bubble">{{ msg.content }}</div>
               <p-avatar icon="pi pi-user" shape="circle"/>
-            }
-          </div>
+            </div>
+          }
+
+          @if (msg.role === 'assistant') {
+            <div class="message-row from-ai">
+              <p-avatar icon="pi pi-heart" shape="circle"/>
+              <div class="assistant-bubble">
+                <markdown [data]="msg.content"/>
+              </div>
+            </div>
+          }
+
         }
       </div>
-    </p-scrollpanel>
+    }
   }
 
 </div>

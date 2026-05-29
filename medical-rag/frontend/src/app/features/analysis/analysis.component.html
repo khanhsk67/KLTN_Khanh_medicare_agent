@@ -1,17 +1,35 @@
 <p-toast/>
 
-<div class="flex flex-column gap-4 p-4">
+<div class="analysis-page flex flex-column gap-4 p-4">
 
-  <!-- Header + Period selector -->
-  <div class="flex align-items-center justify-content-between flex-wrap gap-3">
-    <h1 class="m-0 text-2xl font-bold">Phân tích sức khỏe</h1>
-    <p-selectbutton
-      [options]="periodOptions"
-      [ngModel]="periodDays()"
-      (ngModelChange)="periodDays.set($event)"
-      [allowEmpty]="false"
-      optionLabel="label"
-      optionValue="value"/>
+  <!-- Header + Period selector (Premium Hero Banner) -->
+  <div class="hero-banner flex align-items-center justify-content-between flex-wrap gap-4">
+    <div class="flex flex-column gap-1">
+      <span class="hero-subtitle">Premium dashboard</span>
+      <h1 class="hero-title m-0">Phân tích sức khỏe</h1>
+      <p class="hero-description">Áp dụng công nghệ AI để phân tích và đánh giá xu hướng sức khỏe của bạn.</p>
+    </div>
+
+    <div class="hero-controls flex align-items-center gap-3">
+      <button type="button"
+              class="theme-toggle-btn"
+              (click)="toggleTheme()"
+              [attr.aria-label]="themeMode() === 'dark' ? 'Chuyển sang Light mode' : 'Chuyển sang Dark mode'"
+              [title]="themeMode() === 'dark' ? 'Light mode' : 'Dark mode'">
+        <i class="pi" [class.pi-sun]="themeMode() === 'dark'" [class.pi-moon]="themeMode() === 'light'"></i>
+      </button>
+
+      <div class="hero-filter-container">
+        <span class="filter-label">Thời kỳ lọc</span>
+        <p-selectbutton
+          [options]="periodOptions"
+          [ngModel]="periodDays()"
+          (ngModelChange)="periodDays.set($event)"
+          [allowEmpty]="false"
+          optionLabel="label"
+          optionValue="value"/>
+      </div>
+    </div>
   </div>
 
   @if (isLoading()) {
@@ -19,159 +37,167 @@
     <div class="grid">
       @for (_ of [1,2,3,4]; track $index) {
         <div class="col-12 sm:col-6 lg:col-3">
-          <p-skeleton height="7rem" borderRadius="12px"/>
+          <p-skeleton height="7rem" borderRadius="16px"/>
         </div>
       }
     </div>
-    <p-skeleton height="10rem" borderRadius="12px"/>
+    <p-skeleton height="12rem" borderRadius="16px"/>
     <div class="grid">
-      <div class="col-12 lg:col-6">
-        <p-skeleton height="20rem" borderRadius="12px"/>
+      <div class="col-12 lg:col-4">
+        <p-skeleton height="26rem" borderRadius="16px"/>
       </div>
-      <div class="col-12 lg:col-6">
-        <p-skeleton height="20rem" borderRadius="12px"/>
+      <div class="col-12 lg:col-5">
+        <p-skeleton height="26rem" borderRadius="16px"/>
+      </div>
+      <div class="col-12 lg:col-3">
+        <p-skeleton height="26rem" borderRadius="16px"/>
       </div>
     </div>
   } @else {
 
-    <!-- Summary stat cards -->
-    <div class="grid">
-      @for (stat of summaryStats(); track stat.label) {
-        <div class="col-12 sm:col-6 lg:col-3">
-          <p-card styleClass="h-full">
-            <div class="flex align-items-center gap-3">
-              <div class="stat-icon" [style.background]="stat.color + '20'">
-                <i class="pi" [class]="stat.icon"
-                   [style.color]="stat.color"
-                   style="font-size: 1.5rem"></i>
-              </div>
-              <div class="flex flex-column">
-                <span class="text-2xl font-bold">{{ stat.value }}</span>
-                <span class="text-color-secondary text-sm">{{ stat.label }}</span>
-              </div>
-            </div>
-          </p-card>
-        </div>
-      }
-    </div>
-
     <!-- AI Insight -->
     @if (analysisData()?.ai_insight) {
-      <p-panel header="Nhận xét từ AI" [toggleable]="true">
+      <p-panel header="Nhận xét từ AI" [toggleable]="true" styleClass="ai-insight-panel border-round-2xl shadow-2">
         <markdown [data]="analysisData()!.ai_insight!"/>
       </p-panel>
     }
 
+    <!-- Main Analytics Grid -->
     <div class="grid">
-      <div class="col-12 lg:col-6">
-        <p-card styleClass="h-full">
-          <ng-template #header>
-            <div class="weather-card-header">
-              <i class="pi pi-cloud weather-header-icon"></i>
-              <span class="font-semibold text-lg">Thời tiết &amp; Nguy cơ sức khỏe</span>
-              <span class="text-sm text-color-secondary ml-1">— Hà Nội</span>
+      <!-- Cột 1: Thời tiết & Nguy cơ sức khỏe (Weather Premium Card) -->
+      <div class="col-12 lg:col-5 xl:col-4">
+        @if (weatherData(); as w) {
+          <div class="weather-premium-card border-round-2xl shadow-2">
+            <div class="weather-header">
+              <i class="pi pi-cloud"></i>
+              <span>Thời tiết &amp; Nguy cơ sức khỏe</span>
             </div>
-          </ng-template>
 
-          @if (weatherData(); as w) {
-            <div class="flex flex-column gap-3">
+            <!-- Dãy dự báo thời tiết 6 ngày tới -->
+            <div class="weather-days-row border-round-xl">
+              @for (day of weeklyForecast(); track $index) {
+                <div class="weather-day-item">
+                  <span class="day-name">{{ day.name }}</span>
+                  <i class="pi" [class]="day.icon"></i>
+                  <span class="day-status">{{ day.label }}</span>
+                </div>
+              }
+            </div>
 
-              <!-- Thông số thời tiết -->
-              <div class="weather-stats-row">
-                <div class="weather-stat-item">
-                  <span class="weather-value" [style.color]="getTempColor(w.temperature)">
-                    {{ w.temperature }}°C
-                  </span>
-                  <span class="weather-label">Nhiệt độ</span>
-                </div>
-                <div class="weather-stat-divider"></div>
-                <div class="weather-stat-item">
-                  <span class="weather-value" style="color: #3B82F6">{{ w.humidity }}%</span>
-                  <span class="weather-label">Độ ẩm</span>
-                </div>
-                <div class="weather-stat-divider"></div>
-                <div class="weather-stat-item">
-                  <span class="weather-value text-base">{{ w.condition }}</span>
-                  <span class="weather-label">Tình trạng</span>
-                </div>
-              </div>
+            <!-- Thông số thời tiết chính -->
+            <div class="weather-temp-row">
+              <span class="temp-value" [style.color]="getTempColor(w.temperature)">
+                {{ w.temperature }}°C
+              </span>
+              <span class="temp-label">{{ w.condition }}</span>
+            </div>
 
-              <!-- Mức nguy cơ -->
-              <div class="flex align-items-center gap-2">
-                <span class="text-sm text-color-secondary">Mức nguy cơ:</span>
+            <!-- Mức nguy cơ -->
+            <div class="danger-level-section">
+              <span class="danger-label">Mức nguy cơ</span>
+              <div class="danger-tags">
                 <p-tag
                   [value]="w.risk_level"
                   [severity]="getRiskSeverity(w.risk_level)"
                 />
               </div>
+            </div>
 
-              <!-- Danh sách bệnh -->
-              @if (w.risk_diseases[0] !== 'Bình thường') {
-                <div>
-                  <p class="m-0 mb-2 text-sm font-semibold text-color-secondary">
-                    Nguy cơ mắc bệnh:
-                  </p>
-                  <div class="flex flex-wrap gap-2">
-                    @for (disease of w.risk_diseases; track disease) {
-                      <p-chip [label]="disease" styleClass="disease-chip" />
-                    }
-                  </div>
+            <!-- Danh sách bệnh -->
+            @if (w.risk_diseases[0] !== 'Bình thường') {
+              <div class="disease-section">
+                <span class="disease-label">Nguy cơ mắc bệnh</span>
+                <div class="disease-chips">
+                  @for (disease of w.risk_diseases; track disease) {
+                    <p-chip [label]="disease" styleClass="weather-disease-chip" />
+                  }
                 </div>
-              } @else {
-                <div class="flex align-items-center gap-2">
-                  <i class="pi pi-check-circle" style="color: #10B981; font-size: 1.1rem"></i>
-                  <span class="text-sm" style="color: #10B981">
-                    Thời tiết bình thường, không có nguy cơ đặc biệt
-                  </span>
-                </div>
-              }
-
-              <!-- Khuyến nghị -->
-              <div class="advice-box">
-                <i class="pi pi-info-circle advice-icon"></i>
-                <span class="text-sm line-height-3">{{ w.advice }}</span>
               </div>
+            } @else {
+              <div class="flex align-items-center gap-2 py-1 weather-safe-msg">
+                <i class="pi pi-check-circle" style="font-size: 1.1rem"></i>
+                <span class="text-sm font-semibold">Thời tiết an toàn, không có nguy cơ bệnh dịch</span>
+              </div>
+            }
 
+            <!-- Khuyến nghị y tế -->
+            <div class="weather-advice-box border-round-xl">
+              <i class="pi pi-info-circle"></i>
+              <span>{{ w.advice }}</span>
+            </div>
+          </div>
+        } @else {
+          <div class="premium-card border-round-2xl shadow-2 flex flex-column align-items-center justify-content-center gap-3" style="min-height: 380px">
+            <i class="pi pi-cloud-slash text-5xl text-color-secondary"></i>
+            <p class="text-color-secondary m-0">Không thể tải dữ liệu thời tiết</p>
+          </div>
+        }
+      </div>
+
+      <!-- Cột 2: Doughnut Chart Mức độ triệu chứng -->
+      <div class="col-12 lg:col-7 xl:col-5">
+        <p-card header="Mức độ triệu chứng" styleClass="premium-card severity-card border-round-2xl shadow-2 h-full">
+          @if (severityChartData()) {
+            <div class="severity-chart-wrapper">
+              <p-chart type="doughnut"
+                       [data]="severityChartData()"
+                       [options]="doughnutOptions()"
+                       [plugins]="doughnutPlugins"/>
             </div>
           } @else {
-            <div class="flex flex-column align-items-center justify-content-center gap-2"
-                 style="height: 200px">
-              <i class="pi pi-cloud text-4xl text-color-secondary"></i>
-              <p class="text-color-secondary m-0">Không thể tải dữ liệu thời tiết</p>
+            <div class="flex flex-column align-items-center justify-content-center gap-2" style="height: 340px">
+              <i class="pi pi-chart-pie text-4xl text-color-secondary"></i>
+              <p class="text-color-secondary m-0">Chưa có dữ liệu phân tích mức độ triệu chứng</p>
             </div>
           }
         </p-card>
       </div>
 
-      <div class="col-12 lg:col-6">
-        <p-card header="Mức độ triệu chứng" styleClass="h-full">
-          @if (severityChartData()) {
-            <p-chart class="mt-3" type="doughnut" [data]="severityChartData()" [options]="doughnutOptions" width="100%" height="auto"/>
-          } @else {
-            <div class="flex flex-column align-items-center
-                        justify-content-center gap-2" style="height: 400px">
-              <i class="pi pi-chart-pie text-4xl text-color-secondary"></i>
-              <p class="text-color-secondary m-0">Chưa có dữ liệu</p>
+      <!-- Cột 3: 4 thẻ thống kê xếp dọc -->
+      <div class="col-12 xl:col-3">
+        <div class="stats-column">
+          @for (stat of summaryStats(); track stat.label) {
+            <div class="glass-stat-card border-round-2xl shadow-2"
+                 [style.--icon-glow-color]="stat.color + '40'">
+              <div class="flex flex-column">
+                <span class="stat-value">{{ stat.value }}</span>
+                <span class="stat-label">{{ stat.label }}</span>
+              </div>
+              <div class="stat-circle-icon"
+                   [style.background]="stat.color + '22'"
+                   [style.border-color]="stat.color + '40'">
+                <i class="pi" [class]="stat.icon" [style.color]="stat.color" style="font-size: 1.4rem"></i>
+              </div>
             </div>
           }
-        </p-card>
+        </div>
       </div>
     </div>
 
     <!-- Health timeline -->
     @if (timelineEvents().length > 0) {
-      <p-card header="Timeline sức khỏe" styleClass="timeline-card">
+      <p-card header="Stylish timeline" styleClass="timeline-card mt-2 border-round-2xl shadow-2">
         <p-timeline class="gap-1" [value]="displayedTimelineEvents()" align="left">
+          <!-- Custom Marker phát sáng -->
+          <ng-template #marker let-event>
+            @if (event.severity === 'severe') {
+              <span class="timeline-pulse-marker" style="--pulse-color: #ef4444; --pulse-color-rgb: 239, 68, 68"></span>
+            } @else if (event.severity === 'moderate') {
+              <span class="timeline-pulse-marker" style="--pulse-color: #f59e0b; --pulse-color-rgb: 245, 158, 11"></span>
+            } @else {
+              <span class="timeline-pulse-marker" style="--pulse-color: #10b981; --pulse-color-rgb: 16, 185, 129"></span>
+            }
+          </ng-template>
+
           <ng-template #content let-event>
-            <p-card styleClass="mb-2">
-              <div class="flex align-items-center
-                          justify-content-between gap-2 flex-wrap">
-                <span class="font-semibold">{{ event.main_symptom }}</span>
+            <p-card styleClass="mb-2 timeline-event-card border-round-xl shadow-1"
+                    [style.--severity-border-color]="event.severity === 'severe' ? '#ef4444' : event.severity === 'moderate' ? '#f59e0b' : '#10b981'">
+              <div class="flex align-items-center justify-content-between gap-2 flex-wrap">
+                <span class="timeline-event-title font-bold text-lg">{{ event.main_symptom }}</span>
                 <p-tag [value]="event.severity | severity"
                        [severity]="$any(event.severity | severity:'tag')"/>
               </div>
-              <div class="text-sm text-color-secondary mt-2
-                          flex align-items-center gap-3 flex-wrap">
+              <div class="timeline-event-meta text-sm mt-2 flex align-items-center gap-3 flex-wrap">
                 <span class="flex align-items-center gap-1">
                   <i class="pi pi-clock"></i>
                   {{ event.date | relativeTime }}
@@ -179,7 +205,7 @@
                 @if (event.specialty) {
                   <span class="flex align-items-center gap-1">
                     <i class="pi pi-building"></i>
-                    {{ event.specialty }}
+                    Chuyên khoa: {{ event.specialty }}
                   </span>
                 }
               </div>
@@ -201,12 +227,3 @@
 
   }
 </div>
-<!-- <div>
-    <p class="align-items-center justify-content-center">Nhập ở đây nè</p>
-    <input type="text" [(ngModel)]="filterKnowlegde">
-    <button (click)="handlefilter(this.filterKnowlegde)">Tìm kiếm</button>
-
-  <h3>Kết quả tìm được: {{ resultText }}  </h3>
-</div> -->
-
-

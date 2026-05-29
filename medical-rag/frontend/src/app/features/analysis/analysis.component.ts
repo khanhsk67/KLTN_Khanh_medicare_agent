@@ -1,4 +1,5 @@
 import { Component, signal, computed, effect, inject } from '@angular/core';
+import { DOCUMENT } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { forkJoin, of } from 'rxjs';
 import { catchError, filter } from 'rxjs/operators';
@@ -30,23 +31,34 @@ import { SeverityPipe } from '../../shared/pipes/severity.pipe';
     ChartModule,
     TimelineModule,
     SelectButtonModule,
-    ProgressSpinnerModule, 
-    ChipModule, 
-    PanelModule, 
-    TagModule, 
+    ProgressSpinnerModule,
+    ChipModule,
+    PanelModule,
+    TagModule,
     SkeletonModule,
-    ToastModule, 
+    ToastModule,
     MarkdownModule,
     RelativeTimePipe,
     SeverityPipe
   ],
   providers: [MessageService],
   templateUrl: './analysis.component.html',
-  styleUrl: './analysis.component.scss',
+  styleUrl: './analysis.component.scss'
 })
 export class AnalysisComponent {
   private readonly api = inject(ApiService);
   private readonly messageService = inject(MessageService);
+  private readonly document = inject(DOCUMENT);
+
+  readonly themeMode = signal<'light' | 'dark'>(
+    (typeof localStorage !== 'undefined' && localStorage.getItem('medicare-theme') === 'dark')
+      ? 'dark'
+      : 'light'
+  );
+
+  toggleTheme(): void {
+    this.themeMode.update(m => (m === 'light' ? 'dark' : 'light'));
+  }
 
   private readonly TIMELINE_PAGE_SIZE = 10;
 
@@ -74,26 +86,76 @@ export class AnalysisComponent {
     { label: '90 ngày', value: 90 }
   ];
 
-  readonly barOptions = {
-    responsive: true,
-    plugins: { legend: { display: false } },
-    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-  };
+  readonly doughnutOptions = computed(() => {
+    const isDark = this.themeMode() === 'dark';
+    return {
+      responsive: true,
+      maintainAspectRatio: false,
+      cutout: '68%',
+      rotation: -90,
+      circumference: 360,
+      layout: { padding: 8 },
+      plugins: {
+        legend: {
+          position: 'bottom',
+          labels: {
+            usePointStyle: true,
+            pointStyle: 'circle',
+            padding: 18,
+            font: { size: 12, weight: 600 },
+            color: isDark ? '#cbd5e1' : '#475569'
+          }
+        },
+        tooltip: {
+          backgroundColor: isDark ? 'rgba(15, 23, 42, 0.95)' : 'rgba(15, 23, 42, 0.92)',
+          titleColor: '#ffffff',
+          bodyColor: '#e2e8f0',
+          padding: 12,
+          cornerRadius: 10,
+          displayColors: true,
+          borderColor: 'rgba(56, 189, 248, 0.3)',
+          borderWidth: 1,
+          callbacks: {
+            label: (ctx: any) => ` ${ctx.label}: ${ctx.parsed} lượt`
+          }
+        }
+      },
+      elements: {
+        arc: {
+          borderWidth: 4,
+          borderColor: isDark ? 'rgba(15, 23, 42, 0.8)' : 'transparent',
+          borderRadius: 12,
+          hoverBorderWidth: 0,
+          hoverOffset: 14
+        }
+      },
+      animation: { animateRotate: true, animateScale: true, duration: 900, easing: 'easeOutQuart' as const }
+    };
+  });
 
-  readonly lineOptions = {
-    responsive: true,
-    plugins: { legend: { display: false } },
-    scales: { y: { beginAtZero: true, ticks: { stepSize: 1 } } }
-  };
-
-  readonly doughnutOptions = {
-    responsive: true,
-    maintainAspectRatio: true,
-    aspectRatio: 1.1,
-    plugins: {
-      legend: { position: 'top' }
+  readonly doughnutPlugins = [{
+    id: 'centerTotalText',
+    afterDraw: (chart: any) => {
+      const { ctx, data, chartArea } = chart;
+      const dataset = data.datasets?.[0];
+      if (!dataset || !chartArea) return;
+      const total = (dataset.data as number[]).reduce((a, b) => a + (Number(b) || 0), 0);
+      if (!total) return;
+      const cx = (chartArea.left + chartArea.right) / 2;
+      const cy = (chartArea.top + chartArea.bottom) / 2;
+      const isDark = typeof document !== 'undefined' && document.body.classList.contains('dark-mode');
+      ctx.save();
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillStyle = isDark ? '#f8fafc' : '#0f172a';
+      ctx.font = '800 2rem "Inter", system-ui, sans-serif';
+      ctx.fillText(String(total), cx, cy - 10);
+      ctx.fillStyle = isDark ? '#94a3b8' : '#64748b';
+      ctx.font = '600 0.75rem "Inter", system-ui, sans-serif';
+      ctx.fillText('Tổng triệu chứng', cx, cy + 18);
+      ctx.restore();
     }
-  };
+  }];
 
   readonly summaryStats = computed(() => {
     const d = this.analysisData();
@@ -106,21 +168,6 @@ export class AnalysisComponent {
     ];
   });
 
-  readonly symptomsChartData = computed(() => {
-    const d = this.analysisData();
-    if (!d?.top_symptoms?.length) return null;
-    const top = d.top_symptoms.slice(0, 8);
-    return {
-      labels: top.map(s => s.name),
-      datasets: [{
-        label: 'Số lần',
-        data: top.map(s => s.count),
-        backgroundColor: 'rgba(59, 130, 246, 0.75)',
-        borderRadius: 4
-      }]
-    };
-  });
-
   readonly severityChartData = computed(() => {
     const d = this.analysisData();
     if (!d?.severity_distribution) return null;
@@ -130,28 +177,39 @@ export class AnalysisComponent {
       labels: ['Nghiêm trọng', 'Trung bình', 'Nhẹ'],
       datasets: [{
         data: [dist.severe, dist.moderate, dist.mild],
-        backgroundColor: ['#EF4444', '#F59E0B', '#10B981']
+        backgroundColor: ['#ef4444', '#f59e0b', '#10b981'],
+        hoverBackgroundColor: ['#dc2626', '#d97706', '#059669']
       }]
     };
   });
 
-  readonly frequencyChartData = computed(() => {
-    const d = this.analysisData();
-    if (!d?.consultation_frequency?.length) return null;
-    return {
-      labels: d.consultation_frequency.map(f => f.date),
-      datasets: [{
-        label: 'Số tư vấn',
-        data: d.consultation_frequency.map(f => f.count),
-        fill: true,
-        tension: 0.4,
-        borderColor: '#3B82F6',
-        backgroundColor: 'rgba(59, 130, 246, 0.1)'
-      }]
-    };
+  readonly weeklyForecast = computed(() => {
+    const dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+    const placeholderConditions = [
+      { icon: 'pi-sun', label: 'Nắng' },
+      { icon: 'pi-cloud', label: 'Có mây' },
+      { icon: 'pi-cloud-showers-heavy', label: 'Mưa' },
+      { icon: 'pi-sun', label: 'Nắng' },
+      { icon: 'pi-cloud', label: 'Nhiều mây' },
+      { icon: 'pi-cloud-rain', label: 'Mưa nhẹ' }
+    ];
+    const today = new Date();
+    return placeholderConditions.map((cond, i) => {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      return { name: dayNames[d.getDay()], icon: cond.icon, label: cond.label };
+    });
   });
 
   constructor() {
+    effect(() => {
+      const mode = this.themeMode();
+      const body = this.document.body;
+      if (mode === 'dark') body.classList.add('dark-mode');
+      else body.classList.remove('dark-mode');
+      try { localStorage.setItem('medicare-theme', mode); } catch {}
+    });
+
     effect(() => {
       this.loadAll(this.periodDays());
     });

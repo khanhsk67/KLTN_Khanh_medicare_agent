@@ -1,0 +1,29 @@
+<p-toast position="top-right"/>
+
+<a routerLink="/wallet"
+   class="wallet-pill"
+   pTooltip="Xem ví điểm"
+   tooltipPosition="bottom">
+  <i class="pi pi-star-fill"></i>
+  <span class="balance">{{ wallet.balance() }}</span>
+  <span class="unit">điểm</span>
+
+  @if (!wallet.checkedToday()) {
+    <button type="button"
+            class="checkin-mini"
+            pTooltip="Điểm danh nhận 50 điểm"
+            tooltipPosition="bottom"
+            [disabled]="isCheckinLoading"
+            (click)="doCheckin($event)">
+      @if (isCheckinLoading) {
+        <i class="pi pi-spin pi-spinner"></i>
+      } @else {
+        <i class="pi pi-plus"></i>
+      }
+    </button>
+  } @else {
+    <span class="checked-mini" pTooltip="Đã điểm danh hôm nay" tooltipPosition="bottom">
+      <i class="pi pi-check"></i>
+    </span>
+  }
+</a>

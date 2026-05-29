@@ -1,45 +1,221 @@
+@use '../../../../styles/colors' as c;
+
 :host {
   display: flex;
   flex-direction: column;
   flex: 1;
   overflow: hidden;
   min-height: 0;
+
+  // Light mode tokens
+  --bubble-ai-bg: #{rgba(c.$white, 0.95)};
+  --bubble-ai-border: #{rgba(c.$sky-200, 0.7)};
+  --bubble-ai-text: #{c.$slate-900};
+  --bubble-ai-shadow: 0 4px 14px #{rgba(c.$sky-600, 0.08)};
+  --source-divider: #{rgba(c.$sky-200, 0.5)};
+  --loading-text: #{c.$slate-500};
+}
+
+:host-context(.dark-mode) {
+  --bubble-ai-bg: linear-gradient(135deg, #{rgba(c.$slate-800, 0.7)} 0%, #{rgba(c.$slate-900, 0.8)} 100%);
+  --bubble-ai-border: #{rgba(c.$slate-400, 0.18)};
+  --bubble-ai-text: #{c.$slate-50};
+  --bubble-ai-shadow: 0 4px 18px #{rgba(c.$black, 0.3)};
+  --source-divider: #{rgba(c.$slate-400, 0.25)};
+  --loading-text: #{c.$slate-400};
 }
 
 .messages-container {
   display: flex;
   flex-direction: column;
+  padding: 1.5rem;
+
+  &::-webkit-scrollbar { width: 8px; }
+  &::-webkit-scrollbar-thumb { background: rgba(c.$slate-400, 0.4); border-radius: 4px; }
+  &::-webkit-scrollbar-thumb:hover { background: rgba(c.$slate-400, 0.6); }
 }
 
+// Empty state inside messages (when starting fresh — handled by parent welcome view)
+.empty-state {
+  min-height: 60vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.message-row { display: flex; gap: 0.6rem; margin-bottom: 1rem; align-items: flex-start; }
+.message-row.from-user { justify-content: flex-end; }
+.message-row.from-ai { justify-content: flex-start; }
+
+// === User bubble: sky gradient ===
 .user-bubble {
-  background: var(--p-primary-color);
-  color: #fff;
-  padding: 0.75rem 1rem;
-  border-radius: 1rem 1rem 0 1rem;
+  background: linear-gradient(135deg, c.$sky-600 0%, c.$sky-700 100%);
+  color: c.$white;
+  padding: 0.85rem 1.05rem;
+  border-radius: 18px 18px 4px 18px;
   max-width: 70%;
   word-break: break-word;
+  box-shadow: 0 4px 14px rgba(c.$sky-600, 0.25);
+  font-size: 0.95rem;
+  line-height: 1.55;
+
+  .image-grid {
+    display: grid;
+    gap: 6px;
+    margin-bottom: 0.55rem;
+
+    &.single { grid-template-columns: 1fr; }
+    &.multi { grid-template-columns: repeat(2, 1fr); }
+
+    img {
+      width: 100%;
+      max-height: 200px;
+      border-radius: 10px;
+      object-fit: cover;
+      box-shadow: 0 2px 8px rgba(c.$black, 0.2);
+    }
+  }
 }
 
+// === AI bubble: glass card ===
 .assistant-bubble {
-  background: var(--p-surface-card);
-  border: 1px solid var(--p-surface-border);
-  padding: 0.75rem 1rem;
-  border-radius: 1rem 1rem 1rem 0;
+  background: var(--bubble-ai-bg);
+  border: 1px solid var(--bubble-ai-border);
+  color: var(--bubble-ai-text);
+  padding: 0.95rem 1.15rem;
+  border-radius: 18px 18px 18px 4px;
   max-width: 75%;
   word-break: break-word;
+  box-shadow: var(--bubble-ai-shadow);
+  backdrop-filter: blur(12px);
+  font-size: 0.95rem;
+  line-height: 1.6;
+  transition: background 0.4s ease, border-color 0.4s ease, color 0.4s ease;
 
   &.emergency {
-    border-color: #c62828;
+    border-color: c.$red-500;
     border-width: 2px;
+    box-shadow: 0 4px 18px rgba(c.$red-500, 0.25);
   }
+
+  ::ng-deep {
+    p { margin: 0 0 0.5rem 0; &:last-child { margin-bottom: 0; } }
+    ul, ol { margin: 0.5rem 0; padding-left: 1.4rem; }
+    li { margin-bottom: 0.3rem; }
+    strong { color: c.$sky-700; font-weight: 700; }
+    a { color: c.$sky-600; }
+    code {
+      background: rgba(c.$sky-400, 0.12);
+      padding: 0.1rem 0.4rem;
+      border-radius: 4px;
+      font-size: 0.88em;
+    }
+  }
+}
+
+:host-context(.dark-mode) .assistant-bubble ::ng-deep {
+  strong { color: c.$sky-300; }
+  a { color: c.$sky-300; }
+  code { background: rgba(c.$sky-400, 0.2); color: c.$sky-200; }
+}
+
+// === Avatar ===
+:host ::ng-deep .message-row p-avatar .p-avatar {
+  background: linear-gradient(135deg, c.$sky-500, c.$sky-700) !important;
+  color: c.$white !important;
+  box-shadow: 0 3px 8px rgba(c.$sky-600, 0.3);
+}
+
+// === Sources accordion (inside AI bubble) ===
+.assistant-bubble ::ng-deep .p-accordion {
+  margin-top: 0.6rem;
+
+  .p-accordion-header-link,
+  .p-accordionheader {
+    background: transparent !important;
+    border: none !important;
+    padding: 0.55rem 0 !important;
+    color: c.$sky-700 !important;
+    font-weight: 600;
+    font-size: 0.85rem;
+    border-top: 1px dashed var(--source-divider) !important;
+
+    &:hover { color: c.$sky-600 !important; }
+  }
+
+  .p-accordion-content,
+  .p-accordioncontent {
+    background: transparent !important;
+    border: none !important;
+    padding: 0.3rem 0 0 0 !important;
+  }
+}
+
+:host-context(.dark-mode) .assistant-bubble ::ng-deep .p-accordion {
+  .p-accordion-header-link,
+  .p-accordionheader { color: c.$sky-300 !important; }
 }
 
 .source-item {
-  border-bottom: 1px solid var(--p-surface-border);
-  padding: 0.5rem 0;
+  padding: 0.6rem 0;
+  border-bottom: 1px solid var(--source-divider);
 
-  &:last-child {
-    border-bottom: none;
-    padding-bottom: 0;
+  &:last-child { border-bottom: none; padding-bottom: 0; }
+
+  .source-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.3rem;
   }
+
+  .source-name { font-weight: 600; font-size: 0.83rem; color: var(--bubble-ai-text); }
+  .source-text { font-size: 0.82rem; color: c.$slate-500; margin: 0; line-height: 1.45; }
+}
+
+:host-context(.dark-mode) .source-item .source-text { color: c.$slate-400; }
+
+// === Loading indicator ===
+.loading-row {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.loading-bubble {
+  background: var(--bubble-ai-bg);
+  border: 1px solid var(--bubble-ai-border);
+  border-radius: 18px 18px 18px 4px;
+  padding: 0.8rem 1.1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  color: var(--loading-text);
+  font-size: 0.88rem;
+  box-shadow: var(--bubble-ai-shadow);
+  backdrop-filter: blur(12px);
+
+  .loading-dots {
+    display: inline-flex;
+    gap: 4px;
+
+    span {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: c.$sky-500;
+      animation: dotPulse 1.4s infinite ease-in-out;
+    }
+    span:nth-child(2) { animation-delay: 0.2s; }
+    span:nth-child(3) { animation-delay: 0.4s; }
+  }
+}
+
+@keyframes dotPulse {
+  0%, 80%, 100% { transform: scale(0.7); opacity: 0.5; }
+  40% { transform: scale(1); opacity: 1; }
 }

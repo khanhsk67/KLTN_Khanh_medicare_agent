@@ -9,9 +9,16 @@
       <button class="icon-btn" (click)="toggleSidebar()" title="Đóng sidebar">
         <i class="pi pi-bars"></i>
       </button>
-      <button class="icon-btn" (click)="newChat()" title="Cuộc trò chuyện mới">
+      <div class="header-actions">
+        <button class="icon-btn"
+        (click)="toggleTheme()"
+        [title]="themeMode() === 'dark' ? 'Light mode' : 'Dark mode'">
+        <i class="pi" [class.pi-sun]="themeMode() === 'dark'" [class.pi-moon]="themeMode() === 'light'"></i>
+      </button>
+        <button class="icon-btn" (click)="newChat()" title="Cuộc trò chuyện mới">
         <i class="pi pi-pencil"></i>
       </button>
+      </div>
     </div>
 
     <div class="sidebar-sessions">

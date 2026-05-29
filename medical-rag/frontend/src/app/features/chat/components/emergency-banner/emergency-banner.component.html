@@ -1,10 +1,12 @@
-<div fxLayout="row" fxLayoutAlign="space-between center" class="emergency-banner p-3">
-  <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
-    <i class="pi pi-exclamation-triangle" style="font-size: 24px"></i>
-    <div>
-      <div class="font-bold">CẢNH BÁO: Triệu chứng có thể nghiêm trọng</div>
-      <div>Gọi ngay cấp cứu: <strong>115</strong></div>
+<div class="emergency-banner">
+  <div class="emerg-content">
+    <i class="pi pi-exclamation-triangle emerg-icon"></i>
+    <div class="emerg-text">
+      <div class="emerg-title">CẢNH BÁO: Triệu chứng có thể nghiêm trọng</div>
+      <div class="emerg-hotline">Gọi ngay cấp cứu: <strong>115</strong></div>
     </div>
   </div>
-  <p-button icon="pi pi-times" [text]="true" severity="contrast" (click)="dismissed.emit()" />
+  <button type="button" class="emerg-dismiss" (click)="dismissed.emit()" title="Đóng cảnh báo">
+    <i class="pi pi-times"></i>
+  </button>
 </div>

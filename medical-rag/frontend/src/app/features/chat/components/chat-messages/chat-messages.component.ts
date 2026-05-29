@@ -2,7 +2,6 @@ import {
   Component, Input, ViewChild, ElementRef, AfterViewChecked
 } from '@angular/core';
 import { SlicePipe } from '@angular/common';
-import { FlexLayoutModule } from '@ngbracket/ngx-layout';
 import { AvatarModule } from 'primeng/avatar';
 import { ProgressSpinnerModule } from 'primeng/progressspinner';
 import { AccordionModule } from 'primeng/accordion';
@@ -15,7 +14,6 @@ import { MessageItem, SourceChunk } from '../../../../core/models';
   standalone: true,
   imports: [
     SlicePipe,
-    FlexLayoutModule,
     AvatarModule, ProgressSpinnerModule, AccordionModule, TagModule,
     MarkdownModule
   ],

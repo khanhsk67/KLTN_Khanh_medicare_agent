@@ -1,154 +1,155 @@
 <p-toast position="top-right"/>
 
-<div class="flex flex-column gap-4 p-4">
+<div class="wallet-page">
 
-  <!-- Header -->
-  <h2 class="m-0 text-xl font-bold">Ví điểm</h2>
-
-  <!-- Số dư + actions -->
-  <div class="grid">
-
-    <!-- Card số dư -->
-    <div class="col-12 md:col-4">
-      <p-card styleClass="h-full text-center">
-        <div class="flex flex-column align-items-center gap-3 py-3">
-          <i class="pi pi-wallet text-primary" style="font-size:2.5rem"></i>
-          <div>
-            <div class="text-color-secondary text-sm mb-1">Số dư hiện tại</div>
-            <div class="text-4xl font-bold text-primary">
-              {{ wallet.balance() }}
-            </div>
-            <div class="text-color-secondary text-sm mt-1">điểm</div>
-          </div>
-
-          <!-- Điểm danh -->
-          @if (!wallet.checkedToday()) {
-            <p-button
-              label="Điểm danh nhận 50 điểm"
-              icon="pi pi-star-fill"
-              severity="success"
-              styleClass="w-full"
-              (onClick)="doCheckin()"/>
-          } @else {
-            <p-button
-              label="Đã điểm danh hôm nay"
-              icon="pi pi-check-circle"
-              severity="success"
-              styleClass="w-full"
-              [outlined]="true"
-              [disabled]="true"/>
-          }
-        </div>
-      </p-card>
-    </div>
-
-    <!-- Card nhập mã -->
-    <div class="col-12 md:col-8">
-      <p-card header="Nhập mã điểm" styleClass="h-full">
-        <div class="flex flex-column gap-3">
-          <p class="text-color-secondary text-sm m-0">
-            Nhập mã điểm để nhận điểm thưởng.
-            Thử mã <strong>THESIS2026</strong> để nhận 200 điểm!
-          </p>
-
-          <div class="flex gap-2">
-            <input
-              pInputText
-              class="flex-1"
-              placeholder="Nhập mã điểm (VD: THESIS2026)"
-              [value]="promoCode()"
-              (input)="promoCode.set($any($event.target).value)"
-              (keydown.enter)="redeemCode()"
-              [style]="{ textTransform: 'uppercase' }"/>
-            <p-button
-              label="Đổi mã"
-              icon="pi pi-gift"
-              [loading]="promoLoading()"
-              [disabled]="!promoCode().trim()"
-              (onClick)="redeemCode()"/>
-          </div>
-
-          @if (promoError()) {
-            <p-message
-              severity="error"
-              [text]="promoError()!"
-              styleClass="w-full"/>
-          }
-
-          <!-- Gợi ý mã demo -->
-          <div class="flex flex-wrap gap-2 mt-2">
-            <span class="text-sm text-color-secondary">Mã demo:</span>
-            @for (code of ['THESIS2026','WELCOME100','TESTDEMO']; track code) {
-              <p-tag
-                [value]="code"
-                severity="info"
-                class="cursor-pointer"
-                (click)="promoCode.set(code)"
-                pTooltip="Click để điền mã"/>
-            }
-          </div>
-        </div>
-      </p-card>
-    </div>
-
+  <!-- Mini hero header -->
+  <div class="wallet-hero">
+    <span class="hero-subtitle">Ví điểm</span>
+    <h1 class="hero-title">Quản lý điểm thưởng</h1>
+    <p class="hero-description">Điểm danh hằng ngày và đổi mã khuyến mãi để nhận thêm điểm sử dụng dịch vụ.</p>
   </div>
 
-  <p-divider/>
+  <!-- Balance hero card -->
+  <div class="wallet-balance">
+    <div class="balance-left">
+      <div class="label">Số dư hiện tại</div>
+      <div class="amount-row">
+        <i class="pi pi-star-fill amount-icon"></i>
+        <span class="amount">{{ wallet.balance() }}</span>
+        <span class="currency">điểm</span>
+      </div>
+    </div>
 
-  <!-- Lịch sử nạp điểm -->
-  <div>
-    <h3 class="m-0 mb-3 text-lg font-semibold">Lịch sử nạp điểm</h3>
+    @if (!wallet.checkedToday()) {
+      <button type="button" class="checkin-btn" (click)="doCheckin()">
+        <i class="pi pi-calendar-plus"></i>
+        Điểm danh nhận 50 điểm
+      </button>
+    } @else {
+      <div class="checkin-done">
+        <i class="pi pi-check-circle"></i>
+        Đã điểm danh hôm nay
+      </div>
+    }
+  </div>
+
+  <!-- 3 stat cards -->
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-info">
+        <div class="stat-value">{{ totalEarned() }}</div>
+        <div class="stat-label">Tổng điểm đã nhận</div>
+      </div>
+      <div class="icon-circle sky"><i class="pi pi-arrow-down"></i></div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-info">
+        <div class="stat-value">{{ checkinCount() }}</div>
+        <div class="stat-label">Lượt điểm danh</div>
+      </div>
+      <div class="icon-circle amber"><i class="pi pi-calendar-plus"></i></div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-info">
+        <div class="stat-value">{{ promoCount() }}</div>
+        <div class="stat-label">Mã đã đổi</div>
+      </div>
+      <div class="icon-circle emerald"><i class="pi pi-gift"></i></div>
+    </div>
+  </div>
+
+  <!-- Promo card -->
+  <div class="promo-card">
+    <h3><i class="pi pi-ticket"></i> Nhập mã điểm</h3>
+    <p class="promo-hint">Nhập mã điểm để nhận điểm thưởng. Thử mã <strong>THESIS2026</strong> để nhận 200 điểm!</p>
+
+    <div class="promo-row">
+      <div class="input-field">
+        <i class="pi pi-tag lead"></i>
+        <input
+          [value]="promoCode()"
+          (input)="promoCode.set($any($event.target).value.toUpperCase())"
+          (keydown.enter)="redeemCode()"
+          placeholder="Nhập mã điểm (VD: THESIS2026)"
+          [disabled]="promoLoading()"/>
+      </div>
+      <button type="button"
+              class="redeem-btn"
+              [disabled]="promoLoading() || !promoCode().trim()"
+              (click)="redeemCode()">
+        @if (promoLoading()) {
+          <i class="pi pi-spin pi-spinner"></i> Đang đổi…
+        } @else {
+          <i class="pi pi-gift"></i> Đổi mã
+        }
+      </button>
+    </div>
+
+    @if (promoError()) {
+      <p-message severity="error" [text]="promoError()!" styleClass="w-full mt-2"/>
+    }
+
+    <div class="promo-suggestions">
+      <span class="promo-suggest-label">Mã demo:</span>
+      @for (code of suggestedPromos; track code) {
+        <button type="button"
+                class="promo-chip"
+                pTooltip="Click để điền mã"
+                tooltipPosition="top"
+                (click)="applySuggested(code)">
+          <i class="pi pi-bolt"></i> {{ code }}
+        </button>
+      }
+    </div>
+  </div>
+
+  <!-- Transaction history -->
+  <div class="tx-list">
+    <h3>Lịch sử nạp điểm</h3>
 
     @if (isLoading()) {
       <div class="flex flex-column gap-2">
         @for (i of [1,2,3]; track i) {
-          <p-skeleton height="4rem" borderRadius="8px"/>
+          <p-skeleton height="3.5rem" borderRadius="12px"/>
         }
       </div>
     }
 
     @if (!isLoading() && history().length === 0) {
-      <div class="flex flex-column align-items-center gap-2 py-6">
-        <i class="pi pi-inbox text-color-secondary" style="font-size:2rem"></i>
-        <p class="text-color-secondary m-0">Chưa có lịch sử nạp điểm</p>
-        <p class="text-color-secondary text-sm m-0">
-          Hãy điểm danh hoặc nhập mã để nhận điểm đầu tiên!
-        </p>
+      <div class="empty-tx">
+        <i class="pi pi-inbox"></i>
+        <p>Chưa có lịch sử nạp điểm</p>
+        <p class="hint">Hãy điểm danh hoặc nhập mã để nhận điểm đầu tiên!</p>
       </div>
     }
 
     @if (!isLoading() && history().length > 0) {
-      <div class="flex flex-column gap-2">
-        @for (tx of history(); track tx.id) {
-          <div class="surface-card border-round-lg p-3
-                      flex align-items-center justify-content-between">
-            <div class="flex align-items-center gap-3">
-              <div class="flex align-items-center justify-content-center
-                          border-round-lg bg-green-50 p-2">
-                <i class="pi pi-arrow-down text-green-500"></i>
-              </div>
-              <div class="flex flex-column gap-1">
-                <span class="font-semibold text-sm">
-                  {{ getSourceLabel(tx.source) }}
-                </span>
-                <span class="text-color-secondary text-xs">
-                  {{ tx.created_at | relativeTime }}
-                </span>
-              </div>
+      <div class="tx-items">
+        @for (tx of displayedHistory(); track tx.id) {
+          <div class="tx-item">
+            <div class="tx-marker in"></div>
+            <div class="tx-info">
+              <div class="tx-title">{{ getSourceLabel(tx.source) }}</div>
+              <div class="tx-meta">{{ tx.created_at | relativeTime }}</div>
             </div>
-            <div class="flex align-items-center gap-2">
-              <p-tag
-                [value]="getSourceLabel(tx.source)"
-                [severity]="getSourceSeverity(tx.source)"
-                styleClass="text-xs"/>
-              <span class="font-bold text-green-500 text-lg">
-                +{{ tx.points }}
-              </span>
-              <span class="text-color-secondary text-sm">điểm</span>
+            <span class="source-tag" [class]="getSourceCssClass(tx.source)">
+              {{ getSourceLabel(tx.source) }}
+            </span>
+            <div class="tx-amount in">
+              +{{ tx.points }}<span class="unit">điểm</span>
             </div>
           </div>
         }
       </div>
+
+      @if (remainingHistory() > 0) {
+        <button type="button" class="load-more-btn" (click)="loadMoreHistory()">
+          <i class="pi pi-chevron-down"></i>
+          Xem thêm ({{ remainingHistory() }})
+        </button>
+      }
     }
   </div>
 

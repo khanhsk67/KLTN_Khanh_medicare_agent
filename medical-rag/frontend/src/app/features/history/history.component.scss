@@ -1,0 +1,294 @@
+@use '../../styles/colors' as c;
+
+// ===================================================================
+// HISTORY — Adaptive light/dark glassmorphic theme
+// ===================================================================
+
+:host { display: block; min-height: 100%; }
+
+.history-page {
+  // Light mode tokens
+  --surface: #{rgba(c.$white, 0.92)};
+  --surface-strong: #{rgba(c.$white, 0.97)};
+  --border: #{rgba(c.$sky-200, 0.7)};
+  --border-strong: #{rgba(c.$sky-400, 0.55)};
+  --text: #{c.$slate-900};
+  --text-secondary: #{c.$slate-600};
+  --text-muted: #{c.$slate-500};
+  --shadow: 0 4px 18px #{rgba(c.$sky-600, 0.08)};
+  --shadow-lift: 0 14px 28px -10px #{rgba(c.$sky-600, 0.25)};
+  --sky-glow: #{rgba(c.$sky-400, 0.15)};
+
+  background: linear-gradient(180deg, c.$sky-50 0%, c.$sky-100 100%);
+  color: var(--text);
+  padding: 1.5rem;
+  min-height: calc(100vh - 4rem);
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  border-radius: 24px;
+  transition: background 0.4s ease, color 0.4s ease;
+}
+
+:host-context(.dark-mode) .history-page {
+  --surface: linear-gradient(135deg, #{rgba(c.$slate-800, 0.55)} 0%, #{rgba(c.$slate-900, 0.65)} 100%);
+  --surface-strong: linear-gradient(135deg, #{rgba(c.$slate-800, 0.7)} 0%, #{rgba(c.$slate-900, 0.8)} 100%);
+  --border: #{rgba(c.$slate-400, 0.15)};
+  --border-strong: #{rgba(c.$sky-400, 0.4)};
+  --text: #{c.$slate-50};
+  --text-secondary: #{c.$slate-300};
+  --text-muted: #{c.$slate-400};
+  --shadow: 0 4px 24px #{rgba(c.$black, 0.25)};
+  --shadow-lift: 0 14px 28px -10px #{rgba(c.$sky-600, 0.4)};
+  --sky-glow: #{rgba(c.$sky-400, 0.25)};
+
+  background: radial-gradient(1200px 600px at 10% -10%, #{rgba(c.$sky-600, 0.18)} 0%, transparent 60%),
+              radial-gradient(900px 500px at 110% 10%, #{rgba(c.$sky-500, 0.12)} 0%, transparent 55%),
+              linear-gradient(180deg, #0a0f1c 0%, c.$slate-900 100%);
+}
+
+// ===== Mini hero header =====
+.history-hero {
+  background: linear-gradient(135deg, c.$sky-600 0%, c.$sky-700 50%, c.$sky-900 100%);
+  border-radius: 20px;
+  padding: 1.5rem 2rem;
+  color: c.$white;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 10px 25px -5px rgba(c.$sky-600, 0.35);
+
+  &::before {
+    content: ''; position: absolute; top: -50%; right: -20%;
+    width: 60%; height: 150%;
+    background: radial-gradient(circle, rgba(c.$sky-400, 0.22) 0%, transparent 70%);
+    transform: rotate(-15deg); pointer-events: none;
+  }
+
+  .hero-subtitle {
+    font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.1em;
+    color: c.$sky-100; font-weight: 700;
+  }
+  .hero-title {
+    font-size: 1.85rem; font-weight: 800; margin: 0.4rem 0;
+    background: linear-gradient(to right, c.$white, c.$sky-100);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    letter-spacing: -0.02em;
+  }
+  .hero-description {
+    font-size: 0.9rem; color: c.$sky-200; max-width: 600px; line-height: 1.5; margin: 0;
+
+    strong { color: c.$white; font-weight: 800; }
+  }
+}
+
+// ===== Search + refresh row =====
+.history-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+}
+
+.history-search {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 0 1rem;
+  flex: 1;
+  max-width: 480px;
+  min-height: 2.85rem;
+  box-shadow: var(--shadow);
+  transition: border-color 0.25s ease, box-shadow 0.25s ease, background 0.4s ease;
+  backdrop-filter: blur(8px);
+
+  &:focus-within {
+    border-color: var(--border-strong);
+    box-shadow: 0 0 0 4px var(--sky-glow);
+  }
+
+  i { color: c.$sky-600; font-size: 0.95rem; }
+
+  input {
+    flex: 1;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: var(--text);
+    font-size: 0.95rem;
+    font-family: inherit;
+    padding: 0.75rem 0;
+
+    &::placeholder { color: var(--text-muted); }
+  }
+}
+
+.refresh-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0 1.2rem;
+  min-height: 2.85rem;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: c.$sky-600;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  font-family: inherit;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+
+  i { font-size: 0.92rem; }
+
+  &:hover {
+    background: var(--sky-glow);
+    border-color: var(--border-strong);
+    transform: translateY(-1px);
+  }
+  &:active { transform: translateY(0); }
+}
+
+:host-context(.dark-mode) .refresh-btn { color: c.$sky-300; }
+
+// ===== Skeleton list =====
+.session-skeleton-list {
+  display: flex; flex-direction: column; gap: 0.85rem;
+}
+
+// ===== Empty state =====
+.empty-state {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  padding: 3.5rem 2rem;
+  text-align: center;
+  box-shadow: var(--shadow);
+  backdrop-filter: blur(12px);
+
+  i {
+    font-size: 3rem;
+    color: c.$slate-400;
+    margin-bottom: 1rem;
+    display: block;
+  }
+  .empty-title {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--text);
+    margin: 0 0 0.4rem 0;
+  }
+  .empty-hint {
+    font-size: 0.9rem;
+    color: var(--text-muted);
+    margin: 0;
+
+    strong { color: var(--text); }
+  }
+}
+
+// ===== Session cards list =====
+.session-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+// ===== PrimeNG paginator override =====
+:host ::ng-deep .history-paginator {
+  background: transparent;
+  border: none;
+  margin-top: 0.5rem;
+
+  .p-paginator-content,
+  .p-paginator {
+    background: transparent;
+    border: none;
+    gap: 0.3rem;
+  }
+
+  .p-paginator-page,
+  .p-paginator-first,
+  .p-paginator-prev,
+  .p-paginator-next,
+  .p-paginator-last {
+    width: 2.4rem;
+    height: 2.4rem;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--surface);
+    color: var(--text-secondary);
+    font-weight: 600;
+    transition: all 0.2s ease;
+    backdrop-filter: blur(8px);
+
+    &:hover:not(.p-disabled) {
+      background: var(--sky-glow);
+      color: var(--text);
+      border-color: var(--border-strong);
+    }
+
+    &.p-paginator-page-selected,
+    &.p-highlight {
+      background: linear-gradient(135deg, c.$sky-600, c.$sky-700);
+      color: c.$white;
+      border-color: transparent;
+      box-shadow: 0 4px 12px rgba(c.$sky-600, 0.35);
+    }
+  }
+
+  .p-paginator-rpp-options,
+  .p-dropdown {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    backdrop-filter: blur(8px);
+
+    .p-dropdown-label { color: var(--text); }
+    &:hover { border-color: var(--border-strong); }
+  }
+}
+
+:host ::ng-deep .p-dropdown-panel {
+  background: var(--surface-strong) !important;
+  border: 1px solid var(--border) !important;
+  border-radius: 12px;
+  backdrop-filter: blur(14px);
+  box-shadow: 0 12px 32px #{rgba(c.$black, 0.18)};
+
+  .p-dropdown-item {
+    color: var(--text);
+    &:hover { background: var(--sky-glow) !important; }
+    &.p-dropdown-item-selected,
+    &.p-highlight {
+      background: linear-gradient(135deg, c.$sky-600, c.$sky-700) !important;
+      color: c.$white !important;
+    }
+  }
+}
+
+// ===== ConfirmDialog adaptive =====
+:host ::ng-deep .p-confirm-dialog {
+  .p-dialog {
+    background: var(--surface-strong);
+    border: 1px solid var(--border);
+    color: var(--text);
+    border-radius: 18px;
+    backdrop-filter: blur(16px);
+  }
+  .p-dialog-header { background: transparent; border-bottom: 1px solid var(--border); color: var(--text); }
+  .p-dialog-content { background: transparent; color: var(--text); }
+  .p-dialog-footer { background: transparent; border-top: 1px solid var(--border); }
+}
+
+// ===== Responsive =====
+@media (max-width: 768px) {
+  .history-page { padding: 1rem; }
+  .history-hero { padding: 1.25rem 1.5rem; .hero-title { font-size: 1.5rem; } }
+  .history-search { max-width: none; }
+  .refresh-btn span { display: none; }
+}

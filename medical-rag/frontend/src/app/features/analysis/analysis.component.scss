@@ -1,96 +1,604 @@
- .stat-icon {
-     width: 3rem;
-     height: 3rem;
-     border-radius: 50%;
-     display: flex;
-     align-items: center;
-     justify-content: center;
-     flex-shrink: 0;
- }
+// ===================================================================
+// ANALYSIS DASHBOARD — Adaptive Light/Dark glassmorphic theme
+// Default = Light mode. :host-context(.dark-mode) flips to dark mockup.
+// ===================================================================
 
- .weather-card-header {
-     display: flex;
-     align-items: center;
-     gap: 0.5rem;
-     padding: 1rem 1.25rem 0;
- }
+@use '../../styles/colors' as c;
 
- .weather-header-icon {
-     font-size: 1.25rem;
-     color: #3B82F6;
- }
+:host {
+  display: block;
+  min-height: 100%;
+}
 
- .weather-stats-row {
-     display: flex;
-     align-items: center;
-     gap: 1rem;
-     flex-wrap: wrap;
-     padding: 0.75rem 0;
-     border-top: 1px solid var(--surface-border);
-     border-bottom: 1px solid var(--surface-border);
- }
+.analysis-page {
+  background: linear-gradient(180deg, c.$sky-50 0%, c.$sky-100 100%);
+  color: c.$slate-900;
+  border-radius: 24px;
+  min-height: calc(100vh - 2rem);
+  transition: background 0.4s ease, color 0.4s ease;
+}
 
- .weather-stat-item {
-     display: flex;
-     flex-direction: column;
-     align-items: center;
-     gap: 0.2rem;
-     flex: 1;
-     min-width: 5rem;
- }
+// --- PREMIUM HERO BANNER (identical in both modes) ---
+.hero-banner {
+  background: linear-gradient(135deg, c.$sky-600 0%, c.$sky-700 50%, c.$sky-900 100%);
+  border-radius: 20px;
+  padding: 2.5rem;
+  color: c.$white;
+  box-shadow: 0 10px 25px -5px rgba(c.$sky-600, 0.35);
+  position: relative;
+  overflow: hidden;
 
- .weather-value {
-     font-size: 1.6rem;
-     font-weight: 700;
-     line-height: 1;
- }
+  &::before {
+    content: '';
+    position: absolute;
+    top: -50%;
+    right: -20%;
+    width: 60%;
+    height: 150%;
+    background: radial-gradient(circle, rgba(c.$sky-400, 0.22) 0%, transparent 70%);
+    transform: rotate(-15deg);
+    pointer-events: none;
+  }
+}
 
- .weather-label {
-     font-size: 0.72rem;
-     color: var(--text-color-secondary);
-     text-transform: uppercase;
-     letter-spacing: 0.05em;
- }
+.hero-subtitle {
+  font-size: 0.85rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: c.$sky-100;
+  font-weight: 600;
+}
 
- .weather-stat-divider {
-     width: 1px;
-     height: 2.5rem;
-     background: var(--surface-border);
- }
+.hero-title {
+  font-size: 2.5rem;
+  font-weight: 800;
+  margin: 0.5rem 0;
+  line-height: 1.2;
+  text-shadow: 0 2px 4px rgba(c.$black, 0.15);
+  background: linear-gradient(to right, c.$white, c.$sky-100);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
 
- .disease-chip {
-     background: rgba(239, 68, 68, 0.1) !important;
-     color: #EF4444 !important;
-     font-size: 0.8rem;
- }
+.hero-description {
+  font-size: 0.95rem;
+  color: c.$sky-200;
+  max-width: 500px;
+  margin: 0;
+  line-height: 1.5;
+}
 
- .advice-box {
-     display: flex;
-     gap: 0.6rem;
-     align-items: flex-start;
-     background: rgba(59, 130, 246, 0.07);
-     border-left: 3px solid #3B82F6;
-     border-radius: 0 0.5rem 0.5rem 0;
-     padding: 0.75rem;
- }
+.hero-controls {
+  flex-shrink: 0;
+}
 
- .advice-icon {
-     color: #3B82F6;
-     font-size: 1rem;
-     flex-shrink: 0;
-     margin-top: 0.1rem;
- }
+.hero-filter-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 0.5rem;
 
- :host ::ng-deep .timeline-card .p-timeline-event-opposite {
-     display: none;
- }
+  .filter-label {
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: c.$sky-200;
+    font-weight: 600;
+  }
+}
 
- :host ::ng-deep .timeline-card .p-timeline-event-content {
-     padding-left: 0.75rem;
- }
+// --- THEME TOGGLE BUTTON ---
+.theme-toggle-btn {
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 50%;
+  border: 1px solid rgba(c.$white, 0.25);
+  background: rgba(c.$white, 0.12);
+  backdrop-filter: blur(8px);
+  color: c.$white;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 12px rgba(c.$black, 0.15);
 
- @media (max-width: 576px) {
-     :host ::ng-deep .timeline-card .p-timeline-event-content {
-         padding-left: 0.5rem;
-     }
- }
+  i { font-size: 1.05rem; }
+
+  &:hover {
+    background: rgba(c.$white, 0.22);
+    transform: rotate(20deg) scale(1.06);
+    border-color: rgba(c.$white, 0.5);
+  }
+
+  &:active { transform: scale(0.95); }
+}
+
+// SelectButton glass effect inside hero
+:host ::ng-deep .hero-filter-container .p-selectbutton {
+  background: rgba(c.$white, 0.1);
+  border-radius: 10px;
+  padding: 3px;
+  border: 1px solid rgba(c.$white, 0.18);
+  backdrop-filter: blur(8px);
+
+  .p-button {
+    background: transparent;
+    border: none;
+    color: c.$sky-200;
+    font-size: 0.85rem;
+    font-weight: 500;
+    padding: 0.5rem 1rem;
+    border-radius: 7px;
+    transition: all 0.2s ease;
+
+    &:hover {
+      color: c.$white;
+      background: rgba(c.$white, 0.06);
+    }
+
+    &.p-highlight {
+      background: c.$white;
+      color: c.$sky-700;
+      font-weight: 700;
+      box-shadow: 0 4px 10px rgba(c.$black, 0.15);
+    }
+  }
+}
+
+// ===================================================================
+// LIGHT MODE — base surfaces (clean white cards on sky-pastel page)
+// ===================================================================
+
+%surface-light {
+  background: rgba(c.$white, 0.92);
+  border: 1px solid rgba(c.$sky-200, 0.7);
+  box-shadow: 0 4px 18px rgba(c.$sky-600, 0.08);
+  transition: background 0.4s ease, border-color 0.4s ease, box-shadow 0.4s ease;
+}
+
+.glass-stat-card {
+  @extend %surface-light;
+  padding: 1.5rem;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1),
+              box-shadow 0.3s ease, border-color 0.3s ease, background 0.4s ease;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(c.$white, 0.4) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  &:hover {
+    transform: translateY(-4px);
+    border-color: rgba(c.$sky-400, 0.55);
+    box-shadow: 0 14px 28px -10px rgba(c.$sky-600, 0.25);
+
+    .stat-circle-icon {
+      transform: scale(1.08) rotate(5deg);
+      box-shadow: 0 0 18px var(--icon-glow-color);
+    }
+  }
+}
+
+.stat-value {
+  font-size: 2.5rem;
+  font-weight: 800;
+  line-height: 1;
+  color: c.$slate-900;
+  margin-bottom: 0.4rem;
+  letter-spacing: -0.02em;
+  transition: color 0.4s ease;
+}
+
+.stat-label {
+  font-size: 0.85rem;
+  color: c.$slate-600;
+  font-weight: 500;
+  transition: color 0.4s ease;
+}
+
+.stat-circle-icon {
+  width: 3.2rem;
+  height: 3.2rem;
+  border-radius: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  border: 1px solid rgba(c.$black, 0.05);
+}
+
+// AI insight panel
+:host ::ng-deep .ai-insight-panel {
+  @extend %surface-light;
+
+  .p-panel-header {
+    background: transparent;
+    border: none;
+    padding: 1.25rem 1.5rem 0.5rem;
+    color: c.$slate-900;
+    font-weight: 700;
+    font-size: 1.15rem;
+    transition: color 0.4s ease;
+
+    .p-panel-header-actions .p-button {
+      color: c.$slate-500;
+      &:hover {
+        background: rgba(c.$sky-600, 0.08);
+        color: c.$sky-700;
+      }
+    }
+  }
+
+  .p-panel-content {
+    background: transparent;
+    border: none;
+    padding: 0.5rem 1.5rem 1.25rem;
+    color: c.$slate-700;
+    line-height: 1.6;
+    transition: color 0.4s ease;
+
+    ul {
+      margin: 0;
+      padding-left: 1.2rem;
+      li {
+        margin-bottom: 0.5rem;
+        &:last-child { margin-bottom: 0; }
+      }
+    }
+
+    strong { color: c.$slate-900; }
+  }
+}
+
+// Premium chart cards
+:host ::ng-deep .premium-card {
+  @extend %surface-light;
+  height: 100%;
+
+  .p-card-body,
+  .p-card-content {
+    background: transparent;
+    padding: 1.25rem 1.5rem;
+  }
+
+  .p-card-title {
+    font-size: 1.05rem;
+    font-weight: 700;
+    color: c.$slate-900;
+    margin-bottom: 1rem;
+    letter-spacing: -0.01em;
+    transition: color 0.4s ease;
+  }
+}
+
+// Severity card — extra polish for the doughnut showpiece
+:host ::ng-deep .severity-card {
+  background: radial-gradient(circle at 50% 35%, rgba(c.$sky-400, 0.12) 0%, rgba(c.$white, 0.92) 60%);
+
+  .p-card-body { padding: 1.5rem; }
+  .p-card-title {
+    text-align: left;
+    font-size: 1.1rem;
+  }
+}
+
+// --- WEATHER PREMIUM CARD (light pastel — kept bright like mockup) ---
+.weather-premium-card {
+  background: linear-gradient(160deg, c.$sky-50 0%, c.$sky-100 60%, c.$sky-200 100%);
+  color: c.$slate-900;
+  border: 1px solid rgba(c.$white, 0.4);
+  height: 100%;
+  box-shadow: 0 10px 25px -5px rgba(c.$sky-600, 0.25);
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.1rem;
+
+  .weather-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 700;
+    font-size: 1rem;
+    color: c.$sky-700;
+    i { font-size: 1.2rem; }
+  }
+
+  .weather-days-row {
+    display: flex;
+    justify-content: space-between;
+    background: rgba(c.$white, 0.55);
+    padding: 0.85rem 0.5rem;
+    border: 1px solid rgba(c.$white, 0.8);
+    box-shadow: inset 0 1px 2px rgba(c.$white, 0.6);
+
+    .weather-day-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.3rem;
+      flex: 1;
+
+      .day-name { font-size: 0.7rem; font-weight: 700; color: c.$sky-700; }
+      i { font-size: 1.1rem; color: c.$sky-600; }
+      .day-status { font-size: 0.62rem; color: #0e7490; font-weight: 500; }
+    }
+  }
+
+  .weather-temp-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+
+    .temp-value {
+      font-size: 3.2rem;
+      font-weight: 800;
+      line-height: 1;
+      letter-spacing: -0.03em;
+    }
+    .temp-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: c.$sky-700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+  }
+
+  .danger-level-section,
+  .disease-section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+
+    .danger-label,
+    .disease-label {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: c.$sky-700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .danger-tags,
+    .disease-chips { display: flex; gap: 0.4rem; flex-wrap: wrap; }
+  }
+
+  .weather-safe-msg { color: c.$green-700; }
+
+  .weather-disease-chip {
+    background: rgba(c.$red-500, 0.12) !important;
+    color: c.$red-700 !important;
+    font-size: 0.75rem !important;
+    font-weight: 600 !important;
+    border: 1px solid rgba(c.$red-500, 0.25) !important;
+  }
+
+  .weather-advice-box {
+    display: flex;
+    gap: 0.5rem;
+    background: rgba(c.$white, 0.7);
+    border-left: 4px solid c.$sky-600;
+    padding: 0.75rem 0.9rem;
+    font-size: 0.85rem;
+    line-height: 1.5;
+    font-weight: 500;
+    color: c.$slate-900;
+    box-shadow: 0 2px 8px rgba(c.$sky-600, 0.12);
+
+    i { color: c.$sky-600; margin-top: 0.15rem; }
+  }
+}
+
+:host ::ng-deep .weather-premium-card .p-tag {
+  border-radius: 6px;
+  font-weight: 700;
+  padding: 0.25rem 0.65rem;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+// --- STATS COLUMN (4 stat cards stacked vertically) ---
+.stats-column {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  height: 100%;
+
+  .glass-stat-card {
+    flex: 1 1 0;
+    min-height: 5.5rem;
+    padding: 1.15rem 1.25rem;
+
+    .stat-value { font-size: 2.1rem; }
+    .stat-label { font-size: 0.8rem; }
+    .stat-circle-icon {
+      width: 2.8rem;
+      height: 2.8rem;
+      border-radius: 12px;
+
+      i { font-size: 1.2rem !important; }
+    }
+  }
+}
+
+@media (min-width: 992px) and (max-width: 1199px) {
+  // On lg viewport stats-column wraps below, lay out cards horizontally
+  .stats-column {
+    flex-direction: row;
+    flex-wrap: wrap;
+
+    .glass-stat-card {
+      flex: 1 1 calc(50% - 0.5rem);
+      min-height: 6rem;
+    }
+  }
+}
+
+// --- SEVERITY CHART WRAPPER ---
+.severity-chart-wrapper {
+  position: relative;
+  height: 360px;
+  width: 100%;
+  padding: 0.5rem 0;
+}
+
+// --- TIMELINE ---
+:host ::ng-deep .timeline-card {
+  @extend %surface-light;
+
+  .p-card-body,
+  .p-card-content {
+    background: transparent;
+    padding: 1.5rem;
+  }
+
+  .p-card-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: c.$slate-900;
+    margin-bottom: 1.5rem;
+    transition: color 0.4s ease;
+  }
+}
+
+:host ::ng-deep .p-timeline {
+  .p-timeline-event-connector { background-color: rgba(c.$slate-400, 0.35); width: 2px; }
+  .p-timeline-event-opposite { display: none; }
+  .p-timeline-event-content { padding-left: 1.25rem; padding-bottom: 1.25rem; }
+}
+
+.timeline-pulse-marker {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  display: block;
+  background-color: var(--pulse-color);
+  border: 2px solid rgba(c.$white, 0.95);
+  box-shadow: 0 0 0 0 var(--pulse-color), 0 0 12px var(--pulse-color);
+  animation: pulse-animation 2s infinite;
+}
+
+@keyframes pulse-animation {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(var(--pulse-color-rgb), 0.7), 0 0 10px rgba(var(--pulse-color-rgb), 0.5);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 8px rgba(var(--pulse-color-rgb), 0), 0 0 14px rgba(var(--pulse-color-rgb), 0.6);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(var(--pulse-color-rgb), 0), 0 0 10px rgba(var(--pulse-color-rgb), 0.5);
+  }
+}
+
+:host ::ng-deep .timeline-event-card {
+  background: rgba(c.$white, 0.95) !important;
+  border: 1px solid rgba(c.$slate-200, 0.9) !important;
+  border-left: 4px solid var(--severity-border-color) !important;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.4s ease, border-color 0.4s ease;
+
+  .p-card-body,
+  .p-card-content {
+    background: transparent;
+    padding: 1rem 1.25rem;
+  }
+
+  &:hover {
+    transform: translateX(4px);
+    box-shadow: 0 8px 20px rgba(c.$sky-600, 0.15);
+  }
+
+  .timeline-event-title { color: c.$slate-900; transition: color 0.4s ease; }
+  .timeline-event-meta {
+    color: c.$slate-500;
+    transition: color 0.4s ease;
+    i { color: c.$slate-600; }
+  }
+}
+
+// ===================================================================
+// DARK MODE OVERRIDES — activated when body.dark-mode is set
+// ===================================================================
+:host-context(.dark-mode) {
+  .analysis-page {
+    background: radial-gradient(1200px 600px at 10% -10%, rgba(c.$sky-600, 0.18) 0%, transparent 60%),
+                radial-gradient(900px 500px at 110% 10%, rgba(c.$sky-500, 0.12) 0%, transparent 55%),
+                linear-gradient(180deg, #0a0f1c 0%, c.$slate-900 100%);
+    color: c.$slate-200;
+  }
+
+  .glass-stat-card {
+    background: linear-gradient(135deg, rgba(c.$slate-800, 0.55) 0%, rgba(c.$slate-900, 0.65) 100%);
+    border-color: rgba(c.$slate-400, 0.15);
+    box-shadow: 0 4px 24px rgba(c.$black, 0.25);
+    backdrop-filter: blur(12px);
+
+    &::before {
+      background: linear-gradient(135deg, rgba(c.$white, 0.04) 0%, transparent 60%);
+    }
+
+    &:hover {
+      border-color: rgba(c.$sky-400, 0.4);
+      box-shadow: 0 14px 28px -10px rgba(c.$sky-600, 0.4);
+    }
+  }
+
+  .stat-value { color: c.$white; }
+  .stat-label { color: c.$slate-400; }
+  .stat-circle-icon { border-color: rgba(c.$white, 0.12); }
+
+  ::ng-deep .ai-insight-panel,
+  ::ng-deep .premium-card,
+  ::ng-deep .timeline-card {
+    background: linear-gradient(135deg, rgba(c.$slate-800, 0.55) 0%, rgba(c.$slate-900, 0.65) 100%);
+    border-color: rgba(c.$slate-400, 0.15);
+    box-shadow: 0 4px 24px rgba(c.$black, 0.25);
+    backdrop-filter: blur(12px);
+
+    .p-card-title,
+    .p-panel-header { color: c.$white; }
+    .p-panel-content { color: c.$slate-300; strong { color: c.$slate-100; } }
+    .p-panel-header .p-panel-header-actions .p-button {
+      color: c.$slate-400;
+      &:hover { background: rgba(c.$white, 0.06); color: c.$white; }
+    }
+  }
+
+  ::ng-deep .severity-card {
+    background: radial-gradient(circle at 50% 30%, rgba(c.$sky-400, 0.18) 0%, rgba(c.$slate-900, 0.85) 65%);
+  }
+
+  ::ng-deep .p-timeline .p-timeline-event-connector {
+    background-color: rgba(c.$slate-400, 0.18);
+  }
+
+  ::ng-deep .timeline-event-card {
+    background: linear-gradient(135deg, rgba(c.$slate-800, 0.55) 0%, rgba(c.$slate-900, 0.7) 100%) !important;
+    border-color: rgba(c.$slate-400, 0.15) !important;
+
+    .timeline-event-title { color: c.$slate-100; }
+    .timeline-event-meta { color: c.$slate-400; i { color: c.$slate-300; } }
+
+    &:hover { box-shadow: 0 8px 20px rgba(c.$black, 0.35); }
+  }
+}
+
+@media (max-width: 576px) {
+  :host ::ng-deep .p-timeline-event-content { padding-left: 0.75rem; }
+  .hero-title { font-size: 1.85rem; }
+  .stat-value { font-size: 2rem; }
+}

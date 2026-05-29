@@ -2,27 +2,19 @@
 
   <!-- Image previews (multi) -->
   @if (selectedImages().length > 0) {
-    <div class="image-preview-list" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:8px">
+    <div class="image-preview-list">
       @for (img of selectedImages(); track $index) {
-        <div class="image-preview-item" style="position:relative;flex-shrink:0">
-          <img [src]="img.preview" width="60" height="60"
-               [attr.alt]="img.name"
-               style="object-fit:cover;border-radius:8px;display:block" />
+        <div class="image-preview-item">
+          <img [src]="img.preview" [attr.alt]="img.name"/>
           <button type="button"
                   class="remove-img-btn"
                   (click)="removeImage($index)"
-                  title="Xóa ảnh"
-                  style="position:absolute;top:-6px;right:-6px;width:20px;height:20px;
-                         border-radius:50%;border:none;background:#e53935;color:#fff;
-                         cursor:pointer;display:flex;align-items:center;justify-content:center;
-                         font-size:11px;line-height:1;padding:0">
-            <i class="pi pi-times" style="font-size:10px"></i>
+                  title="Xóa ảnh">
+            <i class="pi pi-times"></i>
           </button>
         </div>
       }
-      <span class="text-xs text-color-secondary" style="align-self:center">
-        {{ selectedImages().length }}/{{ maxImages }}
-      </span>
+      <span class="preview-counter">{{ selectedImages().length }}/{{ maxImages }}</span>
     </div>
   }
 
@@ -47,8 +39,7 @@
               rows="1"
               placeholder="Mô tả triệu chứng... (Enter gửi, Shift+Enter xuống dòng)"
               [disabled]="disabled"
-              (keydown)="onKeydown($event)"
-              style="resize:none"></textarea>
+              (keydown)="onKeydown($event)"></textarea>
 
     <!-- Send button -->
     <button type="button" class="send-btn"

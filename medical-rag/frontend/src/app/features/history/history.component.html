@@ -1,67 +1,77 @@
 <p-toast/>
 <p-confirmDialog/>
 
-<div class="flex flex-column gap-3 p-4">
+<div class="history-page">
 
-  <!-- Header -->
-  <div class="flex align-items-center justify-content-between flex-wrap gap-2">
-    <h1 class="m-0 text-2xl font-bold">Lịch sử tư vấn</h1>
-    <div class="flex align-items-center gap-2">
-      <span class="text-color-secondary text-sm">{{ total() }} phiên</span>
-      <p-button label="Làm mới" icon="pi pi-refresh" [text]="true"
-                size="small" (onClick)="refresh()"/>
-    </div>
+  <!-- Mini hero -->
+  <div class="history-hero">
+    <span class="hero-subtitle">Lịch sử</span>
+    <h1 class="hero-title">Lịch sử tư vấn của bạn</h1>
+    <p class="hero-description">
+      Tổng cộng <strong>{{ total() }}</strong> phiên tư vấn. Tìm kiếm hoặc xem chi tiết từng phiên.
+    </p>
   </div>
 
-  <!-- Search bar -->
-  <p-iconfield style="max-width: 480px">
-    <p-inputicon class="pi pi-search"/>
-    <input pInputText class="w-full"
-           placeholder="Tìm kiếm lịch sử..."
-           (input)="onSearch($event)"/>
-  </p-iconfield>
+  <!-- Search + refresh row -->
+  <div class="history-header">
+    <div class="history-search">
+      <i class="pi pi-search"></i>
+      <input
+        type="text"
+        placeholder="Tìm theo triệu chứng, tiêu đề..."
+        (input)="onSearch($event)"/>
+    </div>
+
+    <button type="button" class="refresh-btn" (click)="refresh()" title="Làm mới">
+      <i class="pi pi-refresh"></i>
+      <span>Làm mới</span>
+    </button>
+  </div>
 
   <!-- Loading skeletons -->
   @if (isLoading()) {
-    <div class="flex flex-column gap-2">
+    <div class="session-skeleton-list">
       @for (_ of skeletonItems; track $index) {
-        <p-skeleton height="4.5rem" borderRadius="8px"/>
+        <p-skeleton height="5rem" borderRadius="16px"/>
       }
     </div>
   } @else {
-    <p-dataview [value]="sessions()">
-      <ng-template #list let-items>
-        @for (s of items; track s.id) {
+
+    <!-- Empty state -->
+    @if (sessions().length === 0) {
+      <div class="empty-state">
+        <i class="pi pi-inbox"></i>
+        @if (searchQuery()) {
+          <p class="empty-title">Không tìm thấy kết quả</p>
+          <p class="empty-hint">Thử từ khóa khác cho "<strong>{{ searchQuery() }}</strong>"</p>
+        } @else {
+          <p class="empty-title">Chưa có lịch sử tư vấn</p>
+          <p class="empty-hint">Bắt đầu hỏi đáp với bác sĩ AI để lưu lại các phiên tư vấn của bạn</p>
+        }
+      </div>
+    }
+
+    <!-- Session cards list -->
+    @if (sessions().length > 0) {
+      <div class="session-list">
+        @for (s of sessions(); track s.id) {
           <app-session-card
             [session]="s"
             (viewRequested)="onView($event)"
             (deleteRequested)="onDelete($event)"/>
         }
-      </ng-template>
-      <ng-template #emptymessage>
-        <div class="flex flex-column align-items-center
-                    justify-content-center gap-3 py-8">
-          <i class="pi pi-inbox"
-             style="font-size: 3rem; color: var(--p-text-muted-color)"></i>
-          <p class="m-0 text-color-secondary">
-            @if (searchQuery()) {
-              Không tìm thấy kết quả cho "{{ searchQuery() }}"
-            } @else {
-              Chưa có lịch sử tư vấn
-            }
-          </p>
-        </div>
-      </ng-template>
-    </p-dataview>
+      </div>
 
-    @if (total() > 0) {
-      <p-paginator
-        [first]="firstIndex"
-        [rows]="pageSize()"
-        [totalRecords]="total()"
-        [rowsPerPageOptions]="rowsPerPageOptions"
-        (onPageChange)="onPageChange($event)"
-        styleClass="border-none"/>
+      <!-- Pagination -->
+      @if (total() > pageSize()) {
+        <p-paginator
+          [first]="firstIndex"
+          [rows]="pageSize()"
+          [totalRecords]="total()"
+          [rowsPerPageOptions]="rowsPerPageOptions"
+          (onPageChange)="onPageChange($event)"
+          styleClass="history-paginator"/>
+      }
     }
   }
 

@@ -1,3 +1,126 @@
-:host {
-  display: block;
+@use '../../../../styles/colors' as c;
+
+:host { display: block; }
+
+.session-card {
+  background: var(--surface, #{rgba(c.$white, 0.92)});
+  border: 1px solid var(--border, #{rgba(c.$sky-200, 0.7)});
+  border-left: 4px solid c.$sky-500;
+  border-radius: 16px;
+  padding: 1.1rem 1.25rem;
+  box-shadow: var(--shadow, 0 4px 18px #{rgba(c.$sky-600, 0.08)});
+  backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  transition: transform 0.25s ease, box-shadow 0.25s ease,
+              border-color 0.25s ease, background 0.4s ease;
+
+  &:hover {
+    transform: translateX(4px);
+    box-shadow: var(--shadow-lift, 0 14px 28px -10px #{rgba(c.$sky-600, 0.25)});
+    border-left-color: c.$sky-400;
+  }
+}
+
+.session-icon {
+  width: 2.8rem;
+  height: 2.8rem;
+  border-radius: 12px;
+  background: rgba(c.$sky-400, 0.18);
+  border: 1px solid rgba(c.$sky-400, 0.3);
+  color: c.$sky-600;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+:host-context(.dark-mode) .session-icon { color: c.$sky-300; }
+
+.session-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.session-title {
+  font-weight: 700;
+  font-size: 1rem;
+  color: var(--text, #{c.$slate-900});
+  margin-bottom: 0.3rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  transition: color 0.4s ease;
+}
+
+.session-meta {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  color: var(--text-muted, #{c.$slate-500});
+  font-size: 0.8rem;
+  transition: color 0.4s ease;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    i { font-size: 0.78rem; color: c.$sky-600; }
+  }
+}
+
+:host-context(.dark-mode) .session-meta span i { color: c.$sky-400; }
+
+.session-actions {
+  display: flex;
+  gap: 0.4rem;
+  flex-shrink: 0;
+}
+
+.action-btn {
+  width: 2.2rem;
+  height: 2.2rem;
+  border-radius: 50%;
+  border: 1px solid transparent;
+  background: transparent;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  transition: all 0.2s ease;
+  font-family: inherit;
+
+  &.view {
+    color: c.$sky-600;
+    &:hover {
+      background: rgba(c.$sky-400, 0.15);
+      border-color: rgba(c.$sky-400, 0.4);
+      transform: translateX(2px);
+    }
+  }
+
+  &.delete {
+    color: c.$slate-500;
+    &:hover {
+      color: c.$red-500;
+      background: rgba(c.$red-500, 0.12);
+      border-color: rgba(c.$red-500, 0.35);
+    }
+  }
+}
+
+:host-context(.dark-mode) {
+  .action-btn.view { color: c.$sky-300; }
+  .action-btn.delete { color: c.$slate-400; }
+}
+
+@media (max-width: 640px) {
+  .session-card { padding: 0.9rem 1rem; gap: 0.75rem; }
+  .session-icon { width: 2.4rem; height: 2.4rem; font-size: 1.05rem; }
+  .session-meta { gap: 0.7rem; font-size: 0.75rem; }
+  .action-btn { width: 2rem; height: 2rem; font-size: 0.8rem; }
 }

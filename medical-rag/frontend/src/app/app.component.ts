@@ -27,4 +27,5 @@ export class AppComponent {
 
   readonly isChatPage = computed(() => this.currentUrl().startsWith('/chat'));
   readonly isAuthPage = computed(() => this.currentUrl().startsWith('/auth'));
+  readonly isPreviewPage = computed(() => this.currentUrl().startsWith('/preview'));
 }

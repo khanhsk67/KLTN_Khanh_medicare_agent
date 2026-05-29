@@ -54,6 +54,11 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   {
+    path: 'preview',
+    loadComponent: () =>
+      import('./features/preview/preview.component').then(m => m.PreviewComponent)
+  },
+  {
     path: '**',
     redirectTo: '/auth/register'
   }

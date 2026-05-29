@@ -1,122 +1,106 @@
 <p-toast position="top-right"/>
 
-<!-- Wrapper toàn trang: ảnh nền -->
-<div class="page-wrapper relative">
-  <img src="assets/images/hero-cover.jpg" alt="bg" class="bg-image absolute"/>
+<div class="auth-page">
 
-  <!-- Navbar -->
-  <nav class="relative z-1 flex align-items-center justify-content-between px-6 py-4">
-    <span class="text-white font-bold text-xl">MediCare AI</span>
-    <ul class="flex gap-5 list-none m-0 p-0">
-      <li><a href="#" class="text-white text-sm no-underline">Home</a></li>
-      <li><a href="#" class="text-white text-sm no-underline">Product</a></li>
-      <li><a href="#" class="text-white text-sm no-underline">Pricing</a></li>
-      <li><a href="#" class="text-white text-sm no-underline">Contact</a></li>
-    </ul>
-    <p-button label="Get Quote Now" icon="pi pi-arrow-right" iconPos="right" size="small"/>
-  </nav>
+  <!-- Theme toggle floating top-right -->
+  <button type="button"
+          class="theme-toggle"
+          (click)="toggleTheme()"
+          [attr.aria-label]="themeMode() === 'dark' ? 'Light mode' : 'Dark mode'"
+          [title]="themeMode() === 'dark' ? 'Light mode' : 'Dark mode'">
+    <i class="pi" [class.pi-sun]="themeMode() === 'dark'" [class.pi-moon]="themeMode() === 'light'"></i>
+  </button>
 
-  <!-- Content -->
-  <div class="relative z-1 flex align-items-center justify-content-between px-6 py-6 gap-4">
+  <div class="auth-content">
 
-    <!-- Hero text trái -->
-    <div class="flex flex-column gap-4">
-      <h1 class="text-white font-bold m-0" style="font-size:2.6rem;line-height:1.15">
-        Bác sĩ AI đồng hành<br>cùng bạn 24/7
-      </h1>
-      <p class="m-0 text-base line-height-3"
-         style="color:rgba(255,255,255,0.85);max-width:360px">
-        Hỏi đáp triệu chứng, theo dõi sức khỏe<br>và nhận tư vấn y tế bất cứ lúc nào.
-      </p>
-      <div class="flex gap-3">
-        <p-button label="Get Quote Now" [rounded]="true" size="small"/>
-        <p-button label="Learn More" [rounded]="true" [outlined]="true"
-                  size="small" styleClass="text-white border-white"/>
+    <!-- LEFT: Hero text floating directly on cover image -->
+    <div class="auth-hero">
+      <span class="badge">Premium Healthcare</span>
+      <h1 class="hero-title">Tham gia MediCare AI<br/>ngay hôm nay</h1>
+      <p class="hero-description">Tạo tài khoản miễn phí để bắt đầu hỏi đáp triệu chứng, lưu lịch sử tư vấn và theo dõi xu hướng sức khoẻ của bạn.</p>
+
+      <div class="feature-list">
+        <div class="item"><i class="pi pi-check"></i> Miễn phí 50 điểm điểm danh hằng ngày</div>
+        <div class="item"><i class="pi pi-check"></i> Bác sĩ AI phản hồi 24/7</div>
+        <div class="item"><i class="pi pi-check"></i> Dữ liệu mã hoá &amp; bảo mật</div>
       </div>
     </div>
 
-    <!-- Register card phải -->
-    <div class="surface-0 border-round-xl p-5 flex flex-column gap-3"
-         style="width:300px;flex-shrink:0">
-      <h2 class="text-center font-bold m-0 text-xl" style="letter-spacing:1px">
-        REGISTER
-      </h2>
+    <!-- RIGHT: Glass form card -->
+    <div class="auth-form">
+      <div class="form-header">
+        <h2 class="form-title">Đăng ký tài khoản</h2>
+        <p class="form-subtitle">Chỉ mất chưa đến một phút</p>
+      </div>
 
-      <p-fluid>
-        <form [formGroup]="form" (ngSubmit)="onSubmit()"
-              class="flex flex-column gap-3">
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-column gap-3">
 
-          <!-- Full Name -->
-          <div class="flex flex-column gap-1">
-            <label class="text-sm font-semibold">
-              Name <span class="text-red-500">*</span>
-            </label>
-            <input pInputText formControlName="fullName"
-                   placeholder="Full Name *"
-                   [class.ng-invalid]="isInvalid('fullName')"
-                   [class.ng-dirty]="isInvalid('fullName')"/>
-            @if (isInvalid('fullName')) {
-              <small class="text-red-500">Vui lòng nhập họ tên (tối thiểu 2 ký tự)</small>
-            }
+        <!-- Full Name -->
+        <div class="input-group">
+          <label>Họ và tên <span class="req">*</span></label>
+          <div class="input-field" [class.invalid]="isInvalid('fullName')">
+            <i class="pi pi-user lead"></i>
+            <input formControlName="fullName" placeholder="Nguyễn Văn A" autocomplete="name"/>
           </div>
+          @if (isInvalid('fullName')) {
+            <small class="field-error"><i class="pi pi-exclamation-circle"></i> Vui lòng nhập họ tên (tối thiểu 2 ký tự)</small>
+          }
+        </div>
 
-          <!-- Email -->
-          <div class="flex flex-column gap-1">
-            <label class="text-sm font-semibold">
-              Email address <span class="text-red-500">*</span>
-            </label>
-            <input pInputText formControlName="email" type="email"
-                   placeholder="example@gmail.com"
-                   [class.ng-invalid]="isInvalid('email')"
-                   [class.ng-dirty]="isInvalid('email')"/>
-            @if (isInvalid('email')) {
-              <small class="text-red-500">Email không hợp lệ</small>
-            }
+        <!-- Email -->
+        <div class="input-group">
+          <label>Email <span class="req">*</span></label>
+          <div class="input-field" [class.invalid]="isInvalid('email')">
+            <i class="pi pi-envelope lead"></i>
+            <input type="email" formControlName="email" placeholder="example@gmail.com" autocomplete="email"/>
           </div>
+          @if (isInvalid('email')) {
+            <small class="field-error"><i class="pi pi-exclamation-circle"></i> Email không hợp lệ</small>
+          }
+        </div>
 
-          <!-- Nickname -->
-          <div class="flex flex-column gap-1">
-            <label class="text-sm font-semibold">Account</label>
-            <input pInputText formControlName="nickname" placeholder="Nickname"/>
+        <!-- Nickname -->
+        <div class="input-group">
+          <label>Biệt danh <span style="color: var(--text-muted); font-weight: 500; text-transform: none;">(tuỳ chọn)</span></label>
+          <div class="input-field">
+            <i class="pi pi-id-card lead"></i>
+            <input formControlName="nickname" placeholder="Tên hiển thị" autocomplete="nickname"/>
           </div>
+        </div>
 
-          <!-- Password -->
-          <div class="flex flex-column gap-1">
-            <label class="text-sm font-semibold">
-              Password <span class="text-red-500">*</span>
-            </label>
+        <!-- Password -->
+        <div class="input-group">
+          <label>Mật khẩu <span class="req">*</span></label>
+          <div class="input-field" [class.invalid]="isInvalid('password')">
+            <i class="pi pi-lock lead"></i>
             <p-password formControlName="password"
-                        placeholder="Password"
+                        placeholder="••••••••"
                         [feedback]="false"
                         [toggleMask]="true"
-                        class="w-full"
-                        inputStyleClass="w-full"
-                        [class.ng-invalid]="isInvalid('password')"
-                        [class.ng-dirty]="isInvalid('password')"/>
-            @if (isInvalid('password')) {
-              <small class="text-red-500">Mật khẩu tối thiểu 8 ký tự</small>
-            }
+                        autocomplete="new-password"/>
           </div>
+          @if (isInvalid('password')) {
+            <small class="field-error"><i class="pi pi-exclamation-circle"></i> Mật khẩu tối thiểu 8 ký tự</small>
+          }
+        </div>
 
-          <!-- Error message API -->
-            <p-message *ngIf="errorMessage" severity="error" class="w-full">{{ errorMessage }}</p-message>
+        <!-- Error message API -->
+        <p-message *ngIf="errorMessage" severity="error" class="w-full">{{ errorMessage }}</p-message>
 
-          <!-- Submit -->
-          <p-button type="submit" label="Sign Up"
-                    styleClass="w-full justify-content-center"
-                    [loading]="isLoading"
-                    [disabled]="isLoading"/>
+        <div class="actions">
+          <button type="submit" class="submit-btn" [disabled]="isLoading">
+            @if (isLoading) {
+              <i class="pi pi-spin pi-spinner"></i> Đang tạo tài khoản…
+            } @else {
+              <i class="pi pi-user-plus"></i> Đăng ký
+            }
+          </button>
 
-          <!-- Link đăng nhập -->
-          <p class="text-center text-sm m-0" style="color:#999">
-            Đã có tài khoản?
-            <a routerLink="/auth/login"
-               class="text-primary no-underline font-semibold">Đăng nhập</a>
+          <p class="switch m-0">
+            Đã có tài khoản? <a routerLink="/auth/login">Đăng nhập</a>
           </p>
-
-        </form>
-      </p-fluid>
+        </div>
+      </form>
     </div>
-
   </div>
 </div>
