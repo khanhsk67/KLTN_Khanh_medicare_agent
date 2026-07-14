@@ -11,13 +11,13 @@
     </div>
 
     <div class="hero-controls flex align-items-center gap-3">
-      <button type="button"
+      <!-- <button type="button"
               class="theme-toggle-btn"
               (click)="toggleTheme()"
               [attr.aria-label]="themeMode() === 'dark' ? 'Chuyển sang Light mode' : 'Chuyển sang Dark mode'"
               [title]="themeMode() === 'dark' ? 'Light mode' : 'Dark mode'">
         <i class="pi" [class.pi-sun]="themeMode() === 'dark'" [class.pi-moon]="themeMode() === 'light'"></i>
-      </button>
+      </button> -->
 
       <div class="hero-filter-container">
         <span class="filter-label">Thời kỳ lọc</span>
@@ -70,7 +70,7 @@
           <div class="weather-premium-card border-round-2xl shadow-2">
             <div class="weather-header">
               <i class="pi pi-cloud"></i>
-              <span>Thời tiết &amp; Nguy cơ sức khỏe</span>
+              <span>Thời tiết và Nguy cơ sức khỏe</span>
             </div>
 
             <!-- Dãy dự báo thời tiết 6 ngày tới -->
@@ -159,8 +159,8 @@
           @for (stat of summaryStats(); track stat.label) {
             <div class="glass-stat-card border-round-2xl shadow-2"
                  [style.--icon-glow-color]="stat.color + '40'">
-              <div class="flex flex-column">
-                <span class="stat-value">{{ stat.value }}</span>
+              <div class="stat-copy flex flex-column">
+                <span class="stat-value" [class.stat-value--text]="stat.valueType === 'text'">{{ stat.value }}</span>
                 <span class="stat-label">{{ stat.label }}</span>
               </div>
               <div class="stat-circle-icon"
@@ -176,7 +176,7 @@
 
     <!-- Health timeline -->
     @if (timelineEvents().length > 0) {
-      <p-card header="Stylish timeline" styleClass="timeline-card mt-2 border-round-2xl shadow-2">
+      <p-card header="Lịch sử sức khỏe" styleClass="timeline-card mt-2 border-round-2xl shadow-2">
         <p-timeline class="gap-1" [value]="displayedTimelineEvents()" align="left">
           <!-- Custom Marker phát sáng -->
           <ng-template #marker let-event>

@@ -164,7 +164,7 @@ export class AnalysisComponent {
       { label: 'Tổng tư vấn', value: d.total_sessions, icon: 'pi-comments', color: '#3B82F6' },
       { label: 'Tổng tin nhắn', value: d.total_messages, icon: 'pi-envelope', color: '#10B981' },
       { label: 'TB tin nhắn/phiên', value: d.avg_messages_per_session.toFixed(1), icon: 'pi-chart-bar', color: '#F59E0B' },
-      { label: 'Triệu chứng gặp nhiều', value: d.top_symptoms[0]?.name ?? '—', icon: 'pi-heart', color: '#EF4444' }
+      { label: 'Triệu chứng gặp nhiều', value: d.top_symptoms[0]?.name ?? '—', icon: 'pi-heart', color: '#EF4444', valueType: 'text' }
     ];
   });
 
@@ -188,10 +188,10 @@ export class AnalysisComponent {
     const placeholderConditions = [
       { icon: 'pi-sun', label: 'Nắng' },
       { icon: 'pi-cloud', label: 'Có mây' },
-      { icon: 'pi-cloud-showers-heavy', label: 'Mưa' },
+      { icon: 'pi-bolt', label: 'Mưa' },
       { icon: 'pi-sun', label: 'Nắng' },
       { icon: 'pi-cloud', label: 'Nhiều mây' },
-      { icon: 'pi-cloud-rain', label: 'Mưa nhẹ' }
+      { icon: 'pi-cloud', label: 'Mưa nhẹ' }
     ];
     const today = new Date();
     return placeholderConditions.map((cond, i) => {
